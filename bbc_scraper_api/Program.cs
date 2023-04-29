@@ -1,4 +1,9 @@
+using bbc_scraper_api.Models;
 using RestSharp;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Threading;
+using System.Web;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,21 +30,41 @@ var httpClient = new RestClient(new RestClientOptions(bbcBaseAPI));
 
 app.MapGet("/search", async (string query) => {
     var response = await httpClient.GetJsonAsync<Result>(bbcBaseAPI + "search?search=" + query + "&limit=9999");
+    var finalRes = new List<List<ContentAPIResponse>>();
     if (response != null && response.SearchResults.TotalItems > 0)
     {
-        List<Item> items = new List<Item>(response.SearchResults.Items);
+        List<Item> items = new(response.SearchResults.Items);
 
-        //if (response.SearchResults.TotalItems > response.SearchResults.Limit)
-        //{
-            //const int pageCount = Math.Ceiling(Convert.ToDecimal(response.SearchResults.TotalItems / response.SearchResults.Limit - 1);
-            //for (var responseLoopIndex = 0; responseLoopIndex < pageCount; responseLoopIndex++)
-            //{
-            //    var result = await httpClient.GetJsonAsync<Result>(bbcBaseAPI + "search?search=" + query)
-            //}
-        //}
+        foreach(var item in items)
+        {
+            var task = Task.Run(async () => await GetRecipeData(items[0]));
+            finalRes.Add(task.Result);
+        }
     }
-    return response;
+    return Results.Json(finalRes);
 });
+
+static async Task<List<ContentAPIResponse>> GetRecipeData(Item item)
+{
+    var client = new RestClient(bbbcContentAPI);
+    var apiRequestBody = new ContentAPIRequest
+    {
+        siteKey = "bbcgoodfood",
+        searchTerm = "carrot-biriyani",
+        postId = Convert.ToInt32(item.Id),
+        widgetLimit = 8,
+        type = new List<string>
+            {
+                "sxs-recipe"
+            },
+        showCardLabels = false,
+        v5enabled = false
+    };
+
+    string urlEncodedText = HttpUtility.UrlEncode(JsonSerializer.Serialize(apiRequestBody));
+
+    return await client.GetJsonAsync<List<ContentAPIResponse>>("?contentRequest=" + urlEncodedText);
+}
 
 app.Run();
 
