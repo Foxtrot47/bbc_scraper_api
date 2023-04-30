@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace bbc_scraper_api.Models 
 {
@@ -13,6 +12,9 @@ namespace bbc_scraper_api.Models
 
         [JsonPropertyName("isPremium")]
         public bool IsPremium { get; set; }
+
+        [JsonPropertyName("url")]
+        public string Url { get; set; }
     }
 
 
@@ -26,6 +28,9 @@ namespace bbc_scraper_api.Models
 
         [JsonPropertyName("totalItems")]
         public int TotalItems { get; set; }
+
+        [JsonPropertyName("nextUrl")]
+        public string NextUrl { get; set; } = null!;
 
     }
 
