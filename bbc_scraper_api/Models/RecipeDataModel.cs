@@ -1,98 +1,247 @@
-﻿using System.Text.Json.Serialization;
+﻿using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
+using System.Text.Json.Serialization;
 
 namespace bbc_scraper_api.Models
 {
-    public class ContentAPIResponse
+    [BsonIgnoreExtraElements]
+    public class RecipeDataModel
     {
-        [JsonPropertyName("title")]
-        public string Title { get; set; }
+        [BsonId]
+        public int Id { get; set; }
 
-        [JsonPropertyName("showTitleIcon")]
-        public bool ShowTitleIcon { get; set; }
+        [BsonElement("category")]
+        public List<string> Category { get; set; }
 
-        [JsonPropertyName("showOverlayIcon")]
-        public bool ShowOverlayIcon { get; set; }
+        [BsonElement("cusine")]
+        public List<string> Cusine { get; set; }
 
-        [JsonPropertyName("contentType")]
-        public object ContentType { get; set; }
+        [BsonElement("date")]
+        public string Date { get; set; }
 
-        [JsonPropertyName("theme")]
-        public object Theme { get; set; }
+        [BsonElement("description")]
+        [JsonPropertyName("description")]
+        public string Description { get; set; }
 
-        [JsonPropertyName("id")]
+        //[BsonElement("diet")]
+        //public List<string> Diet { get; set; }
+
+        [BsonElement("image")]
+        public RecipeDataImage Image { get; set; }
+
+        [BsonElement("ingredients")]
+        public List<RecipeDataIngredientsModel>? Ingredients { get; set; }
+
+        [BsonElement("instructions")]
+        public List<RecipeDataInstructions> Instructions { get; set; }
+
+        [BsonElement("keywords")]
+        public List<string>? Keywords { get; set; }
+
+        [BsonElement("name")]
+        [JsonPropertyName("name")]
+        public string Name { get; set; } = null!;
+
+        [BsonElement("nutritionalInfo")]
+        [JsonPropertyName("nutritionalInfo")]
+        public List<RecipeDataNutritionalInfo> NutritionalInfo { get; set; }
+
+        [BsonElement("rating")]
+        [JsonPropertyName("rating")]
+        public RecipeDataRating Rating { get; set; }
+
+        [BsonElement("slug")]
+        [JsonPropertyName("slug")]
+        public string Slug { get; set; } = null!;
+
+        [BsonElement("similiarRecipes")]
+        [JsonPropertyName("similiarRecipes")]
+        public List<SimiliarRecipeData> SimiliarRecipes { get; set; } = null!;
+
+        [BsonElement("skillLevel")]
+        [JsonPropertyName("skillLevel")]
+        public string SkillLevel { get; set; } = null!;
+
+        [BsonElement("time")]
+        [JsonPropertyName("time")]
+        public RecipeDataTime Time { get; set; } = null!;
+
+        [BsonElement("yield")]
+        [JsonPropertyName("yield")]
+        public string Yield { get; set; }
+
+    }
+    [BsonIgnoreExtraElements]
+    public class RecipeDataIngredientsModel
+    {
+        [BsonElement("heading")]
+        public string? Heading { get; set; }
+
+        //[BsonElement("@id")]
+        //public string Id { get; set; }
+
+        [BsonElement("ingredients")]
+        public List<RecipeDataIngredientModel>? Ingredients { get; set; }
+
+    }
+
+    [BsonIgnoreExtraElements]
+    public class RecipeDataIngredientModel
+    {
+        //[BsonElement("@id")]
+        //public string Id { get; set; }
+
+        [BsonElement("@type")]
+        public string Type { get; set; }
+
+        [BsonElement("ingredientText")]
+        public string IngredientText { get; set; }
+
+        [BsonElement("note")]
+        public string Note { get; set; }
+
+        [BsonElement("quantityText")]
+        public string QuantityText { get; set; }
+
+        [BsonElement("term")]
+        public RecipeDataIngredientTerm Term { get; set; }
+
+    }
+
+    [BsonIgnoreExtraElements]
+    public class RecipeDataIngredientTerm
+    {
+        [BsonId]
         public string Id { get; set; }
 
-        [JsonPropertyName("label")]
-        public object Label { get; set; }
+        [BsonElement("@type")]
+        public string Type { get; set; }
 
-        [JsonPropertyName("kicker")]
-        public string Kicker { get; set; }
+        [BsonElement("slug")]
+        public string Slug { get; set; }
 
-        [JsonPropertyName("postFormat")]
-        public string PostFormat { get; set; }
+        [BsonElement("display")]
+        public string Display { get; set; }
 
-        [JsonPropertyName("rating")]
-        public ContentAPRating Rating { get; set; }
-
-        [JsonPropertyName("url")]
-        public string Url { get; set; }
-
-        [JsonPropertyName("isPremium")]
-        public bool IsPremium { get; set; }
-
-        [JsonPropertyName("subscriptionExperience")]
-        public string SubscriptionExperience { get; set; }
-
-        [JsonPropertyName("image")]
-        public Image Image { get; set; }
-
-        [JsonPropertyName("postType")]
-        public string PostType { get; set; }
-
-        [JsonPropertyName("headingStyledSize")]
-        public int HeadingStyledSize { get; set; }
-
-        [JsonPropertyName("description")]
-        public object Description { get; set; }
+        [BsonElement("taxonomy")]
+        public string Taxonomy { get; set; }
     }
 
-    public class Image
+    [BsonIgnoreExtraElements]
+    public class RecipeDataInstructions
     {
-        [JsonPropertyName("url")]
+        [BsonElement("@type")]
+        public string Type { get; set; }
+
+        [BsonElement("text")]
+        public string Text { get; set; }
+    }
+
+    [BsonIgnoreExtraElements]
+    public class RecipeDataNutritionalInfo
+    {
+        [BsonElement("label")]
+        public string Label { get; set; }
+
+        [BsonElement("prefix")]
+        public string Prefix { get; set; }
+
+        [BsonElement("suffix")]
+        public string Suffix { get; set; }
+
+        [BsonElement("value")]
+        public double Value { get; set; }
+    }
+
+    [BsonIgnoreExtraElements]
+    public class RecipeDataImage
+    {
+        [BsonElement("url")]
         public string Url { get; set; }
 
+        [BsonElement("title")]
+        public string Title { get; set; }
+
+        [BsonElement("alt")]
+        public string Alt { get; set; }
+
+        [BsonElement("width")]
+        public int Width { get; set; }
+
+        [BsonElement("height")]
+        public int Height { get; set; }
+
+        [BsonElement("aspectRatio")]
+        public double? AspectRatio { get; set; }
+    }
+
+    [BsonIgnoreExtraElements]
+    public class RecipeDataRating
+    {
+        [BsonElement("avg")]
+        [JsonPropertyName("avg")]
+        public float Average { get; set; }
+
+        [BsonElement("isHalfStar")]
+        [JsonPropertyName("isHalfStar")]
+        public bool IsHalfStar { get; set; }
+
+        [BsonElement("total")]
+        [JsonPropertyName("total")]
+        public int Total { get; set; }
+    }
+
+    [BsonIgnoreExtraElements]
+    public class RecipeDataTime
+    {
+        [BsonElement("cookTime")]
+        [JsonPropertyName("cookTime")]
+        public int CookTime { get; set; }
+
+        [BsonElement("prepTime")]
+        [JsonPropertyName("prepTime")]
+        public int PrepTime { get; set; }
+
+        [BsonElement("totalTime")]
+        [JsonPropertyName("totalTime")]
+        public int TotalTime { get; set; }
+    }
+
+    [BsonIgnoreExtraElements]
+    public class SimiliarRecipeData
+    {
+        [BsonElement("title")]
         [JsonPropertyName("title")]
         public string Title { get; set; }
 
-        [JsonPropertyName("alt")]
-        public string Alt { get; set; }
+        [BsonElement("url")]
+        [JsonPropertyName("url")]
+        public string Url { get; set; }
 
-        [JsonPropertyName("width")]
-        public int Width { get; set; }
-
-        [JsonPropertyName("height")]
-        public int Height { get; set; }
-
-        [JsonPropertyName("aspectRatio")]
-        public string AspectRatio { get; set; }
+        [BsonElement("image")]
+        [JsonPropertyName("image")]
+        public SimiliarRecipeDataImage Image { get; set; }
     }
 
-    public class ContentAPRating
+    public class SimiliarRecipeDataImage
     {
-        [JsonPropertyName("ratingValue")]
-        public decimal RatingValue { get; set; }
+        [BsonElement("url")]
+        public string Url { get; set; }
 
-        [JsonPropertyName("ratingCount")]
-        public decimal RatingCount { get; set; }
+        [BsonElement("title")]
+        public string Title { get; set; }
 
-        [JsonPropertyName("ratingTypeLabel")]
-        public string RatingTypeLabel { get; set; }
+        [BsonElement("alt")]
+        public string Alt { get; set; }
 
-        [JsonPropertyName("hasRatingCount")]
-        public bool HasRatingCount { get; set; }
+        [BsonElement("width")]
+        public int Width { get; set; }
 
-        [JsonPropertyName("isHalfStar")]
-        public bool IsHalfStar { get; set; }
+        [BsonElement("height")]
+        public int Height { get; set; }
+
+        [BsonElement("aspectRatio")]
+        public string AspectRatio { get; set; }
     }
 
 }
