@@ -67,12 +67,13 @@ app.MapGet("/search", (async (string query, RecipeDataService service) => {
 
 async Task FetchAndAddRecipe (Item item, RecipeDataService service)
 {
-    if (!await service.ItemExists(Convert.ToInt32(item.Id)))
+    var Result = await service.ItemExists(Convert.ToInt32(item.Id));
+    if (Result)
     {
         var recipeData = await GetRecipeData(item);
         if (recipeData?.Props != null)
         {
-            await GetContentApiResponse(Convert.ToInt32(item.Id), recipeData.Props.PageProps.Schema.Name);
+           var contentData =  await GetContentApiResponse(Convert.ToInt32(item.Id), recipeData.Props.PageProps.Schema.Name);
             var data = new RecipeDataModel()
             {
                 Id = Convert.ToInt32(item.Id),
@@ -96,6 +97,70 @@ async Task FetchAndAddRecipe (Item item, RecipeDataService service)
                         Value = nutritionInfo.Value
                     }),
                 Category = recipeData.Props.PageProps.Schema.RecipeCategory.Split(", ").ToList(),
+                Diet = recipeData.Props.PageProps.Diet != null ? recipeData.Props.PageProps.Diet.ConvertAll((dietInfo => new RecipeDataDiet()
+                {
+                    Slug = dietInfo.Slug,
+                    Display = dietInfo.Display,
+                    Taxonomy = dietInfo.Taxonomy
+                })) : new List<RecipeDataDiet>(),
+                Cusine = new List<string>(){ recipeData.Props.PageProps.Schema.RecipeCuisine },
+                Ingredients = recipeData.Props.PageProps.Ingredients.ConvertAll(ingredient =>
+                    new RecipeDataIngredientsModel()
+                    {
+                        Ingredients = ingredient.Ingredients.ConvertAll(
+                            _ingredient => new RecipeDataIngredientModel()
+                            {
+                                Note = _ingredient.Note,
+                                Term = new RecipeDataIngredientTerm()
+                                {
+                                    Type = _ingredient.Term.Type,
+                                    Display = _ingredient.Term.Display,
+                                    Taxonomy = _ingredient.Term.Taxonomy,
+                                    Slug = _ingredient.Term.Slug,
+                                    Id = _ingredient.Term.Id
+                                },
+                                Type = _ingredient.Type,
+                                IngredientText = _ingredient.IngredientText,
+                            })
+                    }),
+                Instructions = recipeData.Props.PageProps.Schema.RecipeInstructions.ConvertAll(instruction => 
+                    new RecipeDataInstructions()
+                    {
+                        Type = instruction.Type,
+                        Text = instruction.Text
+                    }),
+                Yield = recipeData.Props.PageProps.Schema.RecipeYield,
+                Image = new RecipeDataImage()
+                {
+                    Alt = recipeData.Props.PageProps.Image.Alt,
+                    Url = recipeData.Props.PageProps.Image.Url,
+                    Height = recipeData.Props.PageProps.Image.Height,
+                    Title = recipeData.Props.PageProps.Image.Title,
+                    Width = recipeData.Props.PageProps.Image.Width,
+                    AspectRatio = recipeData.Props.PageProps.Image.AspectRatio
+                },
+                SkillLevel = recipeData.Props.PageProps.SkillLevel,
+                Time = new RecipeDataTime()
+                {
+                    PrepTime = recipeData.Props.PageProps.CookAndPrepTime.PreparationMax / 60,
+                    CookTime = recipeData.Props.PageProps.CookAndPrepTime.CookingMax / 60,
+                    TotalTime = recipeData.Props.PageProps.CookAndPrepTime.Total / 60,
+                },
+                SimiliarRecipes = contentData != null ? contentData.ConvertAll(content =>
+                    new SimiliarRecipeData()
+                    {
+                        Image = new SimiliarRecipeDataImage()
+                        {
+                            Alt = content.Image.Alt,
+                            Height = content.Image.Height,
+                            Title = content.Image.Title,
+                            Width = content.Image.Width,
+                            AspectRatio = content.Image.AspectRatio,
+                            Url = content.Image.Url
+                        },
+                        Title = content.Title,
+                        Url = content.Url
+                    }) : new List<SimiliarRecipeData>()
             };
             Console.WriteLine("Adding" + data.Name);
             await service.CreateAsync(data);
@@ -116,7 +181,7 @@ async Task<BBCRecipeResponse> GetRecipeData(Item item)
         if (textContent != null)
             return JsonSerializer.Deserialize<BBCRecipeResponse>(textContent);
     }
-    catch(Exception)
+    catch(Exception ex)
     {
         
     }

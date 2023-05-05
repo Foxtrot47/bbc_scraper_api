@@ -15,38 +15,27 @@ namespace bbc_scraper_api.Models
 
     public class PageProps
     {
-        [JsonPropertyName("postId")]
-        public string PostId { get; set; }
+        [JsonPropertyName("postId")] public string PostId { get; set; }
 
-        [JsonPropertyName("slug")]
-        public string Slug { get; set; }
+        [JsonPropertyName("slug")] public string Slug { get; set; }
 
-        [JsonPropertyName("authors")]
-        public List<Author> Authors { get; set; }
+        [JsonPropertyName("authors")] public List<Author> Authors { get; set; }
 
-        [JsonPropertyName("userRatings")]
-        public UserRatings UserRatings { get; set; }
+        [JsonPropertyName("userRatings")] public UserRatings UserRatings { get; set; }
 
-        [JsonPropertyName("ingredients")]
-        public List<Ingredient> Ingredients { get; set; }
+        [JsonPropertyName("ingredients")] public List<Ingredient> Ingredients { get; set; }
 
-        [JsonPropertyName("nutritionalInfo")]
-        public List<NutritionalInfo> NutritionalInfo { get; set; }
+        [JsonPropertyName("nutritionalInfo")] public List<NutritionalInfo> NutritionalInfo { get; set; }
 
-        [JsonPropertyName("skillLevel")]
-        public string SkillLevel { get; set; }
+        [JsonPropertyName("skillLevel")] public string SkillLevel { get; set; }
 
-        [JsonPropertyName("cookAndPrepTime")]
-        public CookAndPrepTime CookAndPrepTime { get; set; }
+        [JsonPropertyName("cookAndPrepTime")] public CookAndPrepTime CookAndPrepTime { get; set; }
 
-        [JsonPropertyName("schema")]
-        public Schema Schema { get; set; }
+        [JsonPropertyName("schema")] public Schema Schema { get; set; }
 
-        [JsonPropertyName("image")]
-        public RecipeImage Image { get; set; }
+        [JsonPropertyName("image")] public RecipeImage Image { get; set; }
 
-        [JsonPropertyName("diet")]
-        public List<Diet> Diet { get; set; }
+        [JsonPropertyName("diet")] public List<Diet> Diet { get; set; } = null!;
     }
 
     public class Author
@@ -195,7 +184,7 @@ namespace bbc_scraper_api.Models
         public List<RecipeInstruction> RecipeInstructions { get; set; }
 
         [JsonPropertyName("recipeYield")]
-        public string RecipeYield { get; set; }
+        public int RecipeYield { get; set; }
     }
 
     public class RecipeInstruction

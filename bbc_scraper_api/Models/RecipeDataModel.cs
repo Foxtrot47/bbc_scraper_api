@@ -23,8 +23,8 @@ namespace bbc_scraper_api.Models
         [JsonPropertyName("description")]
         public string Description { get; set; }
 
-        //[BsonElement("diet")]
-        //public List<string> Diet { get; set; }
+        [BsonElement("diet")]
+        public List<RecipeDataDiet> Diet { get; set; }
 
         [BsonElement("image")]
         public RecipeDataImage Image { get; set; }
@@ -68,7 +68,7 @@ namespace bbc_scraper_api.Models
 
         [BsonElement("yield")]
         [JsonPropertyName("yield")]
-        public string Yield { get; set; }
+        public int Yield { get; set; }
 
     }
     [BsonIgnoreExtraElements]
@@ -243,5 +243,15 @@ namespace bbc_scraper_api.Models
         [BsonElement("aspectRatio")]
         public string AspectRatio { get; set; }
     }
+    public class RecipeDataDiet
+    {
+        [BsonElement("slug")]
+        public string Slug { get; set; }
 
+        [BsonElement("display")]
+        public string Display { get; set; }
+
+        [BsonElement("taxonomy")]
+        public string Taxonomy { get; set; }
+    }
 }
