@@ -15,56 +15,56 @@ namespace bbc_scraper_api.Models
 
     public class PageProps
     {
-        [JsonPropertyName("postId")] public string PostId { get; set; }
+        [JsonPropertyName("postId")] public string? PostId { get; set; }
 
-        [JsonPropertyName("slug")] public string Slug { get; set; }
+        [JsonPropertyName("slug")] public string? Slug { get; set; }
 
-        [JsonPropertyName("authors")] public List<Author> Authors { get; set; }
+        [JsonPropertyName("authors")] public List<Author>? Authors { get; set; }
 
-        [JsonPropertyName("userRatings")] public UserRatings UserRatings { get; set; }
+        [JsonPropertyName("userRatings")] public UserRatings? UserRatings { get; set; }
 
-        [JsonPropertyName("ingredients")] public List<Ingredient> Ingredients { get; set; }
+        [JsonPropertyName("ingredients")] public List<Ingredient>? Ingredients { get; set; }
 
-        [JsonPropertyName("nutritionalInfo")] public List<NutritionalInfo> NutritionalInfo { get; set; }
+        [JsonPropertyName("nutritionalInfo")] public List<NutritionalInfo>? NutritionalInfo { get; set; }
 
-        [JsonPropertyName("skillLevel")] public string SkillLevel { get; set; }
+        [JsonPropertyName("skillLevel")] public string? SkillLevel { get; set; }
 
-        [JsonPropertyName("cookAndPrepTime")] public CookAndPrepTime CookAndPrepTime { get; set; }
+        [JsonPropertyName("cookAndPrepTime")] public CookAndPrepTime? CookAndPrepTime { get; set; }
 
-        [JsonPropertyName("schema")] public Schema Schema { get; set; }
+        [JsonPropertyName("schema")] public Schema? Schema { get; set; }
 
-        [JsonPropertyName("image")] public RecipeImage Image { get; set; }
+        [JsonPropertyName("image")] public RecipeImage? Image { get; set; }
 
-        [JsonPropertyName("diet")] public List<Diet> Diet { get; set; } = null!;
+        [JsonPropertyName("diet")] public List<Diet>? Diet { get; set; }
     }
 
     public class Author
     {
         [JsonPropertyName("name")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         [JsonPropertyName("avatar")]
-        public Avatar Avatar { get; set; }
+        public Avatar? Avatar { get; set; }
     }
     public class Avatar
     {
         [JsonPropertyName("@id")]
-        public string Id { get; set; }
+        public string? Id { get; set; } = null!;
 
         [JsonPropertyName("@type")]
-        public string Type { get; set; }
+        public string? Type { get; set; } = null!;
 
         [JsonPropertyName("aspectRatio")]
         public decimal AspectRatio { get; set; }
 
         [JsonPropertyName("height")]
-        public int Height { get; set; }
+        public int Height { get; set; } = 0;
 
         [JsonPropertyName("title")]
-        public string Title { get; set; }
+        public string? Title { get; set; }
 
         [JsonPropertyName("url")]
-        public string Url { get; set; }
+        public string? Url { get; set; }
 
         [JsonPropertyName("width")]
         public int Width { get; set; }
@@ -85,57 +85,57 @@ namespace bbc_scraper_api.Models
     public class Ingredient
     {
         [JsonPropertyName("@id")]
-        public string Id { get; set; }
+        public string? Id { get; set; }
 
         [JsonPropertyName("ingredients")]
-        public List<Ingredient> Ingredients { get; set; }
+        public List<Ingredient>? Ingredients { get; set; }
 
         [JsonPropertyName("@type")]
-        public string Type { get; set; }
+        public string? Type { get; set; }
 
         [JsonPropertyName("ingredientText")]
-        public string IngredientText { get; set; }
+        public string? IngredientText { get; set; }
 
         [JsonPropertyName("quantityText")]
-        public string QuantityText { get; set; }
+        public string? QuantityText { get; set; }
 
         [JsonPropertyName("glossaryLink")]
-        public string GlossaryLink { get; set; }
+        public string? GlossaryLink { get; set; }
 
         [JsonPropertyName("term")]
-        public Term Term { get; set; }
+        public Term? Term { get; set; }
 
         [JsonPropertyName("note")]
-        public string Note { get; set; }
+        public string? Note { get; set; }
     }
     public class Term
     {
         [JsonPropertyName("@id")]
-        public string Id { get; set; }
+        public string? Id { get; set; }
 
         [JsonPropertyName("@type")]
-        public string Type { get; set; }
+        public string? Type { get; set; }
 
         [JsonPropertyName("slug")]
-        public string Slug { get; set; }
+        public string? Slug { get; set; }
 
         [JsonPropertyName("display")]
-        public string Display { get; set; }
+        public string? Display { get; set; }
 
         [JsonPropertyName("taxonomy")]
-        public string Taxonomy { get; set; }
+        public string? Taxonomy { get; set; }
     }
 
     public class Diet
     {
         [JsonPropertyName("slug")]
-        public string Slug { get; set; }
+        public string? Slug { get; set; }
 
         [JsonPropertyName("display")]
-        public string Display { get; set; }
+        public string? Display { get; set; }
 
         [JsonPropertyName("taxonomy")]
-        public string Taxonomy { get; set; }
+        public string? Taxonomy { get; set; }
     }
 
     public class CookAndPrepTime
@@ -160,55 +160,55 @@ namespace bbc_scraper_api.Models
     {
 
         [JsonPropertyName("description")]
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         [JsonPropertyName("name")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         [JsonPropertyName("datePublished")]
-        public string DatePublished { get; set; } = null!;
+        public string? DatePublished { get; set; } = null!;
 
         [JsonPropertyName("keywords")]
-        public string Keywords { get; set; }
+        public string? Keywords { get; set; }
 
         [JsonPropertyName("recipeCategory")]
-        public string RecipeCategory { get; set; }
+        public string? RecipeCategory { get; set; }
 
         [JsonPropertyName("recipeCuisine")]
-        public string RecipeCuisine { get; set; }
+        public string? RecipeCuisine { get; set; }
 
         [JsonPropertyName("recipeIngredient")]
-        public List<string> RecipeIngredient { get; set; }
+        public List<string>? RecipeIngredient { get; set; }
 
         [JsonPropertyName("recipeInstructions")]
-        public List<RecipeInstruction> RecipeInstructions { get; set; }
+        public List<RecipeInstruction>? RecipeInstructions { get; set; }
 
         [JsonPropertyName("recipeYield")]
-        public int RecipeYield { get; set; }
+        public string? RecipeYield { get; set; }
     }
 
     public class RecipeInstruction
     {
         [JsonPropertyName("@type")]
-        public string Type { get; set; }
+        public string? Type { get; set; }
 
         [JsonPropertyName("text")]
-        public string Text { get; set; }
+        public string? Text { get; set; }
     }
 
     public class NutritionalInfo
     {
         [JsonPropertyName("label")]
-        public string Label { get; set; }
+        public string? Label { get; set; }
 
         [JsonPropertyName("value")]
         public double Value { get; set; }
 
         [JsonPropertyName("prefix")]
-        public string Prefix { get; set; }
+        public string? Prefix { get; set; }
 
         [JsonPropertyName("suffix")]
-        public string Suffix { get; set; }
+        public string? Suffix { get; set; }
 
 
     }
@@ -216,13 +216,13 @@ namespace bbc_scraper_api.Models
     public class RecipeImage
     {
         [JsonPropertyName("@id")]
-        public string Id { get; set; }
+        public string? Id { get; set; }
 
         [JsonPropertyName("@type")]
-        public string Type { get; set; }
+        public string? Type { get; set; }
 
         [JsonPropertyName("alt")]
-        public string Alt { get; set; }
+        public string? Alt { get; set; }
 
         [JsonPropertyName("aspectRatio")]
         public double AspectRatio { get; set; }
@@ -231,15 +231,15 @@ namespace bbc_scraper_api.Models
         public int Height { get; set; }
 
         [JsonPropertyName("title")]
-        public string Title { get; set; }
+        public string? Title { get; set; }
 
         [JsonPropertyName("url")]
-        public string Url { get; set; }
+        public string? Url { get; set; }
 
         [JsonPropertyName("width")]
         public int Width { get; set; }
 
         [JsonPropertyName("sourceName")]
-        public object SourceName { get; set; }
+        public object? SourceName { get; set; }
     }
 }

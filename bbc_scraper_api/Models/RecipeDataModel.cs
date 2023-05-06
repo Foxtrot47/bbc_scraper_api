@@ -11,64 +11,64 @@ namespace bbc_scraper_api.Models
         public int Id { get; set; }
 
         [BsonElement("category")]
-        public List<string> Category { get; set; }
+        public List<string>? Category { get; set; }
 
         [BsonElement("cusine")]
-        public List<string> Cusine { get; set; }
+        public List<string>? Cusine { get; set; }
 
         [BsonElement("date")]
-        public string Date { get; set; }
+        public string? Date { get; set; }
 
         [BsonElement("description")]
         [JsonPropertyName("description")]
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         [BsonElement("diet")]
-        public List<RecipeDataDiet> Diet { get; set; }
+        public List<RecipeDataDiet>? Diet { get; set; }
 
         [BsonElement("image")]
-        public RecipeDataImage Image { get; set; }
+        public RecipeDataImage? Image { get; set; }
 
         [BsonElement("ingredients")]
         public List<RecipeDataIngredientsModel>? Ingredients { get; set; }
 
         [BsonElement("instructions")]
-        public List<RecipeDataInstructions> Instructions { get; set; }
+        public List<RecipeDataInstructions>? Instructions { get; set; }
 
         [BsonElement("keywords")]
         public List<string>? Keywords { get; set; }
 
         [BsonElement("name")]
         [JsonPropertyName("name")]
-        public string Name { get; set; } = null!;
+        public string? Name { get; set; } = null!;
 
         [BsonElement("nutritionalInfo")]
         [JsonPropertyName("nutritionalInfo")]
-        public List<RecipeDataNutritionalInfo> NutritionalInfo { get; set; }
+        public List<RecipeDataNutritionalInfo>? NutritionalInfo { get; set; }
 
         [BsonElement("rating")]
         [JsonPropertyName("rating")]
-        public RecipeDataRating Rating { get; set; }
+        public RecipeDataRating? Rating { get; set; }
 
         [BsonElement("slug")]
         [JsonPropertyName("slug")]
-        public string Slug { get; set; } = null!;
+        public string? Slug { get; set; } = null!;
 
         [BsonElement("similiarRecipes")]
         [JsonPropertyName("similiarRecipes")]
-        public List<SimiliarRecipeData> SimiliarRecipes { get; set; } = null!;
+        public List<SimiliarRecipeData>? SimiliarRecipes { get; set; }
 
         [BsonElement("skillLevel")]
         [JsonPropertyName("skillLevel")]
-        public string SkillLevel { get; set; } = null!;
+        public string? SkillLevel { get; set; }
 
         [BsonElement("time")]
         [JsonPropertyName("time")]
-        public RecipeDataTime Time { get; set; } = null!;
+        public RecipeDataTime? Time { get; set; }
 
         [BsonElement("yield")]
         [JsonPropertyName("yield")]
-        public int Yield { get; set; }
+        public string? Yield { get; set; }
 
     }
     [BsonIgnoreExtraElements]
@@ -92,19 +92,19 @@ namespace bbc_scraper_api.Models
         //public string Id { get; set; }
 
         [BsonElement("@type")]
-        public string Type { get; set; }
+        public string? Type { get; set; }
 
         [BsonElement("ingredientText")]
-        public string IngredientText { get; set; }
+        public string? IngredientText { get; set; }
 
         [BsonElement("note")]
-        public string Note { get; set; }
+        public string? Note { get; set; }
 
         [BsonElement("quantityText")]
-        public string QuantityText { get; set; }
+        public string? QuantityText { get; set; }
 
         [BsonElement("term")]
-        public RecipeDataIngredientTerm Term { get; set; }
+        public RecipeDataIngredientTerm? Term { get; set; }
 
     }
 
@@ -112,42 +112,42 @@ namespace bbc_scraper_api.Models
     public class RecipeDataIngredientTerm
     {
         [BsonId]
-        public string Id { get; set; }
+        public string? Id { get; set; }
 
         [BsonElement("@type")]
-        public string Type { get; set; }
+        public string? Type { get; set; }
 
         [BsonElement("slug")]
-        public string Slug { get; set; }
+        public string? Slug { get; set; }
 
         [BsonElement("display")]
-        public string Display { get; set; }
+        public string? Display { get; set; }
 
         [BsonElement("taxonomy")]
-        public string Taxonomy { get; set; }
+        public string? Taxonomy { get; set; }
     }
 
     [BsonIgnoreExtraElements]
     public class RecipeDataInstructions
     {
         [BsonElement("@type")]
-        public string Type { get; set; }
+        public string? Type { get; set; }
 
         [BsonElement("text")]
-        public string Text { get; set; }
+        public string? Text { get; set; }
     }
 
     [BsonIgnoreExtraElements]
     public class RecipeDataNutritionalInfo
     {
         [BsonElement("label")]
-        public string Label { get; set; }
+        public string? Label { get; set; }
 
         [BsonElement("prefix")]
-        public string Prefix { get; set; }
+        public string? Prefix { get; set; }
 
         [BsonElement("suffix")]
-        public string Suffix { get; set; }
+        public string? Suffix { get; set; }
 
         [BsonElement("value")]
         public double Value { get; set; }
@@ -157,13 +157,13 @@ namespace bbc_scraper_api.Models
     public class RecipeDataImage
     {
         [BsonElement("url")]
-        public string Url { get; set; }
+        public string? Url { get; set; }
 
         [BsonElement("title")]
-        public string Title { get; set; }
+        public string? Title { get; set; }
 
         [BsonElement("alt")]
-        public string Alt { get; set; }
+        public string? Alt { get; set; }
 
         [BsonElement("width")]
         public int Width { get; set; }
@@ -212,27 +212,27 @@ namespace bbc_scraper_api.Models
     {
         [BsonElement("title")]
         [JsonPropertyName("title")]
-        public string Title { get; set; }
+        public string? Title { get; set; }
 
         [BsonElement("url")]
         [JsonPropertyName("url")]
-        public string Url { get; set; }
+        public string? Url { get; set; }
 
         [BsonElement("image")]
         [JsonPropertyName("image")]
-        public SimiliarRecipeDataImage Image { get; set; }
+        public SimiliarRecipeDataImage? Image { get; set; }
     }
 
     public class SimiliarRecipeDataImage
     {
         [BsonElement("url")]
-        public string Url { get; set; }
+        public string? Url { get; set; }
 
         [BsonElement("title")]
-        public string Title { get; set; }
+        public string? Title { get; set; }
 
         [BsonElement("alt")]
-        public string Alt { get; set; }
+        public string? Alt { get; set; }
 
         [BsonElement("width")]
         public int Width { get; set; }
@@ -241,17 +241,17 @@ namespace bbc_scraper_api.Models
         public int Height { get; set; }
 
         [BsonElement("aspectRatio")]
-        public string AspectRatio { get; set; }
+        public string? AspectRatio { get; set; }
     }
     public class RecipeDataDiet
     {
         [BsonElement("slug")]
-        public string Slug { get; set; }
+        public string? Slug { get; set; }
 
         [BsonElement("display")]
-        public string Display { get; set; }
+        public string? Display { get; set; }
 
         [BsonElement("taxonomy")]
-        public string Taxonomy { get; set; }
+        public string? Taxonomy { get; set; }
     }
 }
