@@ -51,18 +51,13 @@ app.MapGet("/search", async (string query, RecipeDataService service) =>
     if (fetchResponse?.SearchResults.TotalItems > 0)
     {
         List<Item> items = new(fetchResponse.SearchResults.Items);
+        await FetchAndAddRecipe(items[0], service);
 
-        while (fetchResponse.SearchResults.NextUrl != null)
+        while (fetchResponse?.SearchResults.NextUrl != null)
         {
             fetchResponse = await httpClient.GetJsonAsync<Result>(fetchResponse.SearchResults.NextUrl);
-            items.AddRange(items);
-        }
-        const int threadMaxSize = 12;
-        int batchCount = (int)Math.Ceiling((double)items.Count / threadMaxSize);
-        for (int i = 0; i < batchCount; i++)
-        {
-            var batchedItems = items.Skip(i * threadMaxSize).Take(threadMaxSize);
-            var tasks = batchedItems.Select(item => FetchAndAddRecipe(item, service));
+            var newItems = fetchResponse?.SearchResults.Items;
+            var tasks = newItems?.Select(item => FetchAndAddRecipe(item, service));
             await Task.WhenAll(tasks);
         }
     }
