@@ -221,6 +221,10 @@ namespace bbc_scraper_api.Models
         [BsonElement("image")]
         [JsonPropertyName("image")]
         public SimiliarRecipeDataImage? Image { get; set; }
+
+        [BsonElement("rating")]
+        [JsonPropertyName("rating")]
+        public ContentAPRating? Rating { get; set; }
     }
 
     public class SimiliarRecipeDataImage

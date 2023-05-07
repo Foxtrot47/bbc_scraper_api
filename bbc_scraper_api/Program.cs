@@ -158,7 +158,8 @@ async Task FetchAndAddRecipe(Item item, RecipeDataService service)
                                 Url = content.Image.Url
                             },
                             Title = content.Title,
-                            Url = content.Url
+                            Url = content.Url,
+                            Rating = content.Rating
                         }) : new List<SimiliarRecipeData>()
                 };
                 Console.WriteLine("Adding" + data.Name);
