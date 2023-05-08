@@ -45,15 +45,16 @@ const string bbcBaseAPI = "https://www.bbcgoodfood.com/api/search-frontend/";
 const string bbbcContentAPI = "https://related-content-production.headless.imdserve.com/";
 var httpClient = new RestClient(new RestClientOptions(bbcBaseAPI));
 
-app.MapGet("/search", async (string query, RecipeDataService service) =>
+app.MapGet("/search", async (string query, bool fetchSinglePage ,RecipeDataService service) =>
 {
-    var fetchResponse = await httpClient.GetJsonAsync<Result>(bbcBaseAPI + "search?search=" + query + "&limit=100");
+    int fetchLimit = fetchSinglePage ? 1 : 100;
+    var fetchResponse = await httpClient.GetJsonAsync<Result>(bbcBaseAPI + "search?search=" + query + "&limit=" + fetchLimit);
     if (fetchResponse?.SearchResults.TotalItems > 0)
     {
         List<Item> items = new(fetchResponse.SearchResults.Items);
         await FetchAndAddRecipe(items[0], service);
 
-        while (fetchResponse?.SearchResults.NextUrl != null)
+        while (fetchResponse?.SearchResults.NextUrl != null && fetchLimit > 1)
         {
             fetchResponse = await httpClient.GetJsonAsync<Result>(fetchResponse.SearchResults.NextUrl);
             var newItems = fetchResponse?.SearchResults.Items;
