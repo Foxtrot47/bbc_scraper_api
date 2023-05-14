@@ -27,6 +27,16 @@ namespace bbc_scraper_api.Services
             return res;
         }
 
+        public async Task<List<int>> CheckforMultipleItems(List<int> ids)
+        {
+            var existingIds = await _recipeCollection
+                .Find(x => ids.Contains(x.Id))
+                .Project(x => x.Id)
+                .ToListAsync();
+
+            return existingIds;
+        }
+
         public async Task CreateAsync(RecipeDataModel newrecipe) =>
             await _recipeCollection.InsertOneAsync(newrecipe);
     }
