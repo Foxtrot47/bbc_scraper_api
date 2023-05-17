@@ -83,7 +83,7 @@ namespace bbc_scraper_api.Models
         public decimal RatingValue { get; set; }
 
         [JsonPropertyName("ratingCount")]
-        public decimal RatingCount { get; set; }
+        public int RatingCount { get; set; }
 
         [JsonPropertyName("ratingTypeLabel")]
         public string RatingTypeLabel { get; set; }

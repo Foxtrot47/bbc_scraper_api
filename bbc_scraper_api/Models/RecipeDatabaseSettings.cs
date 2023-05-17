@@ -7,5 +7,7 @@
         public string DatabaseName { get; set; } = null!;
 
         public string RecipeCollectionName { get; set; } = null!;
+
+        public string CollectionCollectionName { get; set; } = null!;
     }
 }

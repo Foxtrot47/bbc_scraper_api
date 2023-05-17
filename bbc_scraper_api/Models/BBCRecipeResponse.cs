@@ -5,12 +5,12 @@ namespace bbc_scraper_api.Models
     public class BBCRecipeResponse
     {
         [JsonPropertyName("props")]
-        public Props Props { get; set; }
+        public Props? Props { get; set; }
     }
     public class Props
     {
         [JsonPropertyName("pageProps")]
-        public PageProps PageProps { get; set; }
+        public PageProps? PageProps { get; set; }
     }
 
     public class PageProps

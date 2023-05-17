@@ -7,6 +7,7 @@ namespace bbc_scraper_api.Services
     public class RecipeDataService
     {
         private readonly IMongoCollection<RecipeDataModel> _recipeCollection;
+        private readonly IMongoCollection<CollectionModel> _collectionCollection;
 
         public RecipeDataService(
             IOptions<RecipeDatabaseSettings> recipeDatabaseSettings)
@@ -19,6 +20,9 @@ namespace bbc_scraper_api.Services
 
             _recipeCollection = mongoDb.GetCollection<RecipeDataModel>(
                 recipeDatabaseSettings.Value.RecipeCollectionName);
+
+            _collectionCollection = mongoDb.GetCollection<CollectionModel>(
+                recipeDatabaseSettings.Value.CollectionCollectionName);
         }
 
         public async Task<bool> ItemExists(int id)
@@ -39,5 +43,8 @@ namespace bbc_scraper_api.Services
 
         public async Task CreateAsync(RecipeDataModel newrecipe) =>
             await _recipeCollection.InsertOneAsync(newrecipe);
+
+        public async Task CreateCollectionItemAsync(CollectionModel newcollection) =>
+            await _collectionCollection.InsertOneAsync(newcollection);
     }
 }

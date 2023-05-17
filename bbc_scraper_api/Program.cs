@@ -16,6 +16,7 @@ using bbc_scraper_api.Utils;
 using IConfiguration = Microsoft.Extensions.Configuration.IConfiguration;
 using Microsoft.Extensions.Options;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -43,7 +44,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-const string bbcBaseAPI = "https://www.bbcgoodfood.com/api/search-frontend/";
+const string bbcBaseAPI = "https://www.bbcgoodfood.com/api/";
 const string bbbcContentAPI = "https://related-content-production.headless.imdserve.com/";
 var httpClient = new RestClient(new RestClientOptions(bbcBaseAPI));
 
@@ -62,7 +63,7 @@ app.MapGet("/search", async (string query, bool fetchSinglePage ,RecipeDataServi
             {
                 responseResult =
                     await httpClient.GetJsonAsync<Result>(
-                        bbcBaseAPI + "search?search=" + query + "&limit=" + fetchLimit);
+                        bbcBaseAPI + "search-frontend/search?search=" + query + "&limit=" + fetchLimit);
                 firstFetch = false;
             }
             else 
@@ -78,6 +79,46 @@ app.MapGet("/search", async (string query, bool fetchSinglePage ,RecipeDataServi
             var tasks = items?.Select(item => FetchAndAddRecipe(item, service));
             if (tasks != null) await Task.WhenAll(tasks);
         } while (responseResult?.SearchResults.NextUrl != null && fetchLimit > 1);
+});
+
+app.MapGet("/scrapecollection" , async (string collectionSlug, RecipeDataService service) =>
+{
+    try
+    {
+        var pageNum = 1;
+        BbcCollectionApiResponseRoot response;
+        do
+        {
+            var query = bbcBaseAPI + "lists/posts/list/" + collectionSlug + "/items?page=" + pageNum;
+            response = await httpClient.GetJsonAsync<BbcCollectionApiResponseRoot>(query);
+            if (response?.Items == null)
+                break;
+            foreach (var item in response.Items)
+            {
+                var collectionItem = new CollectionModel();
+                TextInfo info = new CultureInfo("en-US",false).TextInfo;
+                collectionItem.CollectionName = info.ToTitleCase(collectionSlug.Replace("-", " "));
+                collectionItem.CollectionSlug = collectionSlug;
+                collectionItem.RecipeNameName = item.Name;
+                collectionItem.Image = item.Image;
+                collectionItem.Url = item.Url;
+                collectionItem.DateAdded = DateTime.Now;
+                collectionItem.Rating = new RecipeDataRating()
+                {
+                    Total = item.Rating.RatingCount,
+                    IsHalfStar = item.Rating.IsHalfStar,
+                    Average = (float)item.Rating.RatingValue 
+                };
+                await service.CreateCollectionItemAsync(collectionItem);
+            }
+            pageNum++;
+        } while (!string.IsNullOrEmpty(response.NextUrl));
+
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine(ex.ToString());
+    }
 });
 
 async Task FetchAndAddRecipe(Item item, RecipeDataService service)
