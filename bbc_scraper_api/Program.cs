@@ -48,40 +48,43 @@ const string bbcBaseAPI = "https://www.bbcgoodfood.com/api/";
 const string bbbcContentAPI = "https://related-content-production.headless.imdserve.com/";
 var httpClient = new RestClient(new RestClientOptions(bbcBaseAPI));
 
-app.MapGet("/search", async (string query, bool fetchSinglePage ,RecipeDataService service) =>
+app.MapGet("/search", async (string query, bool fetchSinglePage, RecipeDataService service) =>
 {
     int fetchLimit = fetchSinglePage ? 1 : 100;
     List<Item> items;
     List<int> itemIds;
     List<int> existingItems;
-    
+
     Result? responseResult = null;
     var firstFetch = true;
-        do
+    do
+    {
+        if (firstFetch)
         {
-            if (firstFetch)
-            {
-                responseResult =
-                    await httpClient.GetJsonAsync<Result>(
-                        bbcBaseAPI + "search-frontend/search?search=" + query + "&limit=" + fetchLimit);
-                firstFetch = false;
-            }
-            else 
-                responseResult = await httpClient.GetJsonAsync<Result>(responseResult?.SearchResults.NextUrl);
-            if (responseResult?.SearchResults == null || responseResult?.SearchResults.TotalItems < 1)
-                break;
-            
-            items = new(responseResult?.SearchResults.Items);
-            itemIds = items.Select(item => int.Parse(item.Id)).ToList();
-            existingItems = await service.CheckforMultipleItems(itemIds);
-            items = items.Where(item => !existingItems.Contains(int.Parse(item.Id))).ToList();
+            responseResult =
+                await httpClient.GetJsonAsync<Result>(
+                    bbcBaseAPI + "search-frontend/search?search=" + query + "&limit=" + fetchLimit);
+            firstFetch = false;
+        }
+        else
+        {
+            responseResult = await httpClient.GetJsonAsync<Result>(responseResult?.SearchResults.NextUrl);
+        }
 
-            var tasks = items?.Select(item => FetchAndAddRecipe(item, service));
-            if (tasks != null) await Task.WhenAll(tasks);
-        } while (responseResult?.SearchResults.NextUrl != null && fetchLimit > 1);
+        if (responseResult?.SearchResults == null || responseResult?.SearchResults.TotalItems < 1)
+            break;
+
+        items = new(responseResult?.SearchResults.Items);
+        itemIds = items.ConvertAll(item => int.Parse(item.Id));
+        existingItems = await service.CheckforMultipleItems(itemIds);
+        items = items.Where(item => !existingItems.Contains(int.Parse(item.Id))).ToList();
+
+        var tasks = items?.Select(item => FetchAndAddRecipe(item, service));
+        if (tasks != null) await Task.WhenAll(tasks);
+    } while (responseResult?.SearchResults.NextUrl != null && fetchLimit > 1);
 });
 
-app.MapGet("/scrapecollection" , async (string collectionSlug, RecipeDataService service) =>
+app.MapGet("/scrapecollection", async (string collectionSlug, RecipeDataService service) =>
 {
     try
     {
@@ -96,7 +99,7 @@ app.MapGet("/scrapecollection" , async (string collectionSlug, RecipeDataService
             foreach (var item in response.Items)
             {
                 var collectionItem = new CollectionModel();
-                TextInfo info = new CultureInfo("en-US",false).TextInfo;
+                TextInfo info = new CultureInfo("en-US", false).TextInfo;
                 collectionItem.CollectionName = info.ToTitleCase(collectionSlug.Replace("-", " "));
                 collectionItem.CollectionSlug = collectionSlug;
                 collectionItem.RecipeNameName = item.Name;
@@ -107,13 +110,12 @@ app.MapGet("/scrapecollection" , async (string collectionSlug, RecipeDataService
                 {
                     Total = item.Rating.RatingCount,
                     IsHalfStar = item.Rating.IsHalfStar,
-                    Average = (float)item.Rating.RatingValue 
+                    Average = (float)item.Rating.RatingValue
                 };
                 await service.CreateCollectionItemAsync(collectionItem);
             }
             pageNum++;
         } while (!string.IsNullOrEmpty(response.NextUrl));
-
     }
     catch (Exception ex)
     {
@@ -123,27 +125,30 @@ app.MapGet("/scrapecollection" , async (string collectionSlug, RecipeDataService
 
 async Task FetchAndAddRecipe(Item item, RecipeDataService service)
 {
-    try {
+    try
+    {
         var recipeData = await GetRecipeData(item);
         if (recipeData?.Props != null)
         {
             var contentData = recipeData.Props.PageProps?.Schema?.Name != null ? await GetContentApiResponse(Convert.ToInt32(item.Id), recipeData.Props.PageProps.Schema.Name) : null;
-            var data = new RecipeDataModel()
+            var data = new RecipeDataModel
             {
                 Id = Convert.ToInt32(item.Id),
                 Name = recipeData.Props.PageProps?.Schema?.Name,
                 Description = recipeData.Props.PageProps?.Schema?.Description,
                 Slug = recipeData.Props.PageProps?.Slug,
                 Date = recipeData.Props.PageProps?.Schema?.DatePublished,
-                Rating = recipeData.Props.PageProps?.UserRatings != null ? new RecipeDataRating()
-                {
-                    Average = recipeData.Props.PageProps.UserRatings.Avg,
-                    IsHalfStar = recipeData.Props.PageProps.UserRatings.IsHalfStar,
-                    Total = recipeData.Props.PageProps.UserRatings.Total
-                } : null,
+                Rating = recipeData.Props.PageProps?.UserRatings != null
+                    ? new RecipeDataRating
+                    {
+                        Average = recipeData.Props.PageProps.UserRatings.Avg,
+                        IsHalfStar = recipeData.Props.PageProps.UserRatings.IsHalfStar,
+                        Total = recipeData.Props.PageProps.UserRatings.Total
+                    }
+                    : null,
                 Keywords = recipeData.Props.PageProps?.Schema?.Keywords?.Split(", ").ToList(),
-                NutritionalInfo = recipeData.Props.PageProps?.NutritionalInfo?.ConvertAll(
-                    nutritionInfo => new RecipeDataNutritionalInfo()
+                NutritionalInfo = recipeData.Props.PageProps?.NutritionalInfo?.ConvertAll(nutritionInfo =>
+                    new RecipeDataNutritionalInfo
                     {
                         Label = nutritionInfo.Label,
                         Prefix = nutritionInfo.Prefix,
@@ -151,60 +156,69 @@ async Task FetchAndAddRecipe(Item item, RecipeDataService service)
                         Value = nutritionInfo.Value
                     }),
                 Category = recipeData.Props.PageProps?.Schema?.RecipeCategory?.Split(", ").ToList(),
-                Diet = recipeData.Props.PageProps?.Diet != null ? recipeData.Props.PageProps.Diet.ConvertAll(dietInfo => new RecipeDataDiet()
-                {
-                    Slug = dietInfo.Slug,
-                    Display = dietInfo.Display,
-                    Taxonomy = dietInfo.Taxonomy
-                }) : new List<RecipeDataDiet>(),
-                Cusine = recipeData.Props.PageProps?.Schema?.RecipeCuisine != null ? new List<string>() { recipeData.Props.PageProps.Schema.RecipeCuisine } : null,
-                Ingredients = recipeData.Props.PageProps?.Ingredients?.ConvertAll(ingredient =>
-                    new RecipeDataIngredientsModel()
+                Diet = recipeData.Props.PageProps?.Diet?.ConvertAll(dietInfo =>
+                    new RecipeDataDiet
                     {
-                        Ingredients = ingredient.Ingredients?.ConvertAll(
-                            _ingredient => new RecipeDataIngredientModel()
+                        Slug = dietInfo.Slug,
+                        Display = dietInfo.Display,
+                        Taxonomy = dietInfo.Taxonomy
+                    }) ?? new List<RecipeDataDiet>(),
+                Cusine = recipeData.Props.PageProps?.Schema?.RecipeCuisine != null
+                    ? new List<string> { recipeData.Props.PageProps.Schema.RecipeCuisine }
+                    : null,
+                Ingredients = recipeData.Props.PageProps?.Ingredients?.ConvertAll(ingredient =>
+                    new RecipeDataIngredientsModel
+                    {
+                        Ingredients = ingredient.Ingredients?.ConvertAll(_ingredient =>
+                            new RecipeDataIngredientModel
                             {
                                 Note = _ingredient.Note,
-                                Term = _ingredient.Term != null ? new RecipeDataIngredientTerm()
-                                {
-                                    Type = _ingredient.Term.Type,
-                                    Display = _ingredient.Term.Display,
-                                    Taxonomy = _ingredient.Term.Taxonomy,
-                                    Slug = _ingredient.Term.Slug,
-                                    Id = _ingredient.Term.Id
-                                } : null,
+                                Term = _ingredient.Term != null
+                                    ? new RecipeDataIngredientTerm
+                                    {
+                                        Type = _ingredient.Term.Type,
+                                        Display = _ingredient.Term.Display,
+                                        Taxonomy = _ingredient.Term.Taxonomy,
+                                        Slug = _ingredient.Term.Slug,
+                                        Id = _ingredient.Term.Id
+                                    }
+                                    : null,
                                 Type = _ingredient.Type,
                                 IngredientText = _ingredient.IngredientText,
                                 QuantityText = _ingredient.QuantityText
                             })
                     }),
                 Instructions = recipeData.Props.PageProps?.Schema?.RecipeInstructions?.ConvertAll(instruction =>
-                    new RecipeDataInstructions()
+                    new RecipeDataInstructions
                     {
                         Type = instruction.Type,
                         Text = instruction.Text
                     }),
                 Yield = recipeData.Props.PageProps?.Schema?.RecipeYield,
-                Image = recipeData.Props.PageProps?.Image != null ? new RecipeDataImage()
-                {
-                    Alt = recipeData.Props.PageProps.Image.Alt,
-                    Url = recipeData.Props.PageProps.Image.Url,
-                    Height = recipeData.Props.PageProps.Image.Height,
-                    Title = recipeData.Props.PageProps.Image.Title,
-                    Width = recipeData.Props.PageProps.Image.Width,
-                    AspectRatio = recipeData.Props.PageProps.Image.AspectRatio
-                } : null,
-                SkillLevel = recipeData.Props.PageProps?.SkillLevel,
-                Time = recipeData.Props.PageProps?.CookAndPrepTime != null ? new RecipeDataTime()
-                {
-                    PrepTime = recipeData.Props.PageProps.CookAndPrepTime.PreparationMax / 60,
-                    CookTime = recipeData.Props.PageProps.CookAndPrepTime.CookingMax / 60,
-                    TotalTime = recipeData.Props.PageProps.CookAndPrepTime.Total / 60,
-                } : null,
-                SimiliarRecipes = contentData != null ? contentData?.ConvertAll(content =>
-                    new SimiliarRecipeData()
+                Image = recipeData.Props.PageProps?.Image != null
+                    ? new RecipeDataImage
                     {
-                        Image = new SimiliarRecipeDataImage()
+                        Alt = recipeData.Props.PageProps.Image.Alt,
+                        Url = recipeData.Props.PageProps.Image.Url,
+                        Height = recipeData.Props.PageProps.Image.Height,
+                        Title = recipeData.Props.PageProps.Image.Title,
+                        Width = recipeData.Props.PageProps.Image.Width,
+                        AspectRatio = recipeData.Props.PageProps.Image.AspectRatio
+                    }
+                    : null,
+                SkillLevel = recipeData.Props.PageProps?.SkillLevel,
+                Time = recipeData.Props.PageProps?.CookAndPrepTime != null
+                    ? new RecipeDataTime
+                    {
+                        PrepTime = recipeData.Props.PageProps.CookAndPrepTime.PreparationMax / 60,
+                        CookTime = recipeData.Props.PageProps.CookAndPrepTime.CookingMax / 60,
+                        TotalTime = recipeData.Props.PageProps.CookAndPrepTime.Total / 60
+                    }
+                    : null,
+                SimiliarRecipes = contentData?.ConvertAll(content =>
+                    new SimiliarRecipeData
+                    {
+                        Image = new SimiliarRecipeDataImage
                         {
                             Alt = content.Image.Alt,
                             Height = content.Image.Height,
@@ -216,13 +230,14 @@ async Task FetchAndAddRecipe(Item item, RecipeDataService service)
                         Title = content.Title,
                         Url = content.Url,
                         Rating = content.Rating
-                    }) : new List<SimiliarRecipeData>()
+                    }) ?? new List<SimiliarRecipeData>()
             };
             Console.WriteLine("Adding" + data.Name);
             await service.CreateAsync(data);
         }
     }
-    catch (Exception ex) {
+    catch (Exception ex)
+    {
         Console.WriteLine(ex);
     }
 }
