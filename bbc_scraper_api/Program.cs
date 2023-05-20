@@ -18,6 +18,8 @@ using Microsoft.Extensions.Options;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using bbc_scraper_api.Contexts;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +30,12 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.Configure<RecipeDatabaseSettings>(
     builder.Configuration.GetSection("RecipeDatabase"));
+
+builder.Services.AddDbContext<RecipeDbContext>(dbContextOptions => dbContextOptions
+    .UseMySql(builder.Configuration.GetConnectionString("MariaDbConnectionString"), new MariaDbServerVersion((new Version(10, 6, 11))))
+    .LogTo(Console.WriteLine, LogLevel.Information)
+    .EnableDetailedErrors()
+);
 
 builder.Services.AddSingleton<RecipeDataService>();
 
