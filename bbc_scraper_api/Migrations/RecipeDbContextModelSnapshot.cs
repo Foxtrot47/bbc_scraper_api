@@ -19,6 +19,20 @@ namespace bbc_scraper_api.Migrations
                 .HasAnnotation("ProductVersion", "7.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
+            modelBuilder.Entity("bbc_scraper_api.MariaDBModels.Category", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Categories");
+                });
+
             modelBuilder.Entity("bbc_scraper_api.MariaDBModels.Image", b =>
                 {
                     b.Property<int>("Id")
@@ -122,6 +136,21 @@ namespace bbc_scraper_api.Migrations
                     b.ToTable("Instructions");
                 });
 
+            modelBuilder.Entity("bbc_scraper_api.MariaDBModels.Keyword", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Keywords");
+                });
+
             modelBuilder.Entity("bbc_scraper_api.MariaDBModels.NutritionalInfo", b =>
                 {
                     b.Property<int>("Id")
@@ -217,19 +246,15 @@ namespace bbc_scraper_api.Migrations
 
             modelBuilder.Entity("bbc_scraper_api.MariaDBModels.RecipeCategory", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
+                    b.Property<int>("RecipeId")
                         .HasColumnType("int");
 
-                    b.Property<string>("Name")
-                        .HasColumnType("longtext");
-
-                    b.Property<int?>("RecipeId")
+                    b.Property<int>("CategoryId")
                         .HasColumnType("int");
 
-                    b.HasKey("Id");
+                    b.HasKey("RecipeId", "CategoryId");
 
-                    b.HasIndex("RecipeId");
+                    b.HasIndex("CategoryId");
 
                     b.ToTable("RecipeCategories");
                 });
@@ -274,19 +299,15 @@ namespace bbc_scraper_api.Migrations
 
             modelBuilder.Entity("bbc_scraper_api.MariaDBModels.RecipeKeyword", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("longtext");
-
                     b.Property<int>("RecipeId")
                         .HasColumnType("int");
 
-                    b.HasKey("Id");
+                    b.Property<int>("KeywordId")
+                        .HasColumnType("int");
 
-                    b.HasIndex("RecipeId");
+                    b.HasKey("RecipeId", "KeywordId");
+
+                    b.HasIndex("KeywordId");
 
                     b.ToTable("RecipeKeywords");
                 });
@@ -448,9 +469,21 @@ namespace bbc_scraper_api.Migrations
 
             modelBuilder.Entity("bbc_scraper_api.MariaDBModels.RecipeCategory", b =>
                 {
-                    b.HasOne("bbc_scraper_api.MariaDBModels.Recipe", null)
+                    b.HasOne("bbc_scraper_api.MariaDBModels.Category", "Category")
+                        .WithMany("RecipeCategories")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("bbc_scraper_api.MariaDBModels.Recipe", "Recipe")
                         .WithMany("Categories")
-                        .HasForeignKey("RecipeId");
+                        .HasForeignKey("RecipeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+
+                    b.Navigation("Recipe");
                 });
 
             modelBuilder.Entity("bbc_scraper_api.MariaDBModels.RecipeCuisine", b =>
@@ -471,11 +504,21 @@ namespace bbc_scraper_api.Migrations
 
             modelBuilder.Entity("bbc_scraper_api.MariaDBModels.RecipeKeyword", b =>
                 {
-                    b.HasOne("bbc_scraper_api.MariaDBModels.Recipe", null)
+                    b.HasOne("bbc_scraper_api.MariaDBModels.Keyword", "Keyword")
+                        .WithMany("RecipeKeywords")
+                        .HasForeignKey("KeywordId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("bbc_scraper_api.MariaDBModels.Recipe", "Recipe")
                         .WithMany("Keywords")
                         .HasForeignKey("RecipeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Keyword");
+
+                    b.Navigation("Recipe");
                 });
 
             modelBuilder.Entity("bbc_scraper_api.MariaDBModels.SimilarRecipe", b =>
@@ -497,9 +540,19 @@ namespace bbc_scraper_api.Migrations
                     b.Navigation("Rating");
                 });
 
+            modelBuilder.Entity("bbc_scraper_api.MariaDBModels.Category", b =>
+                {
+                    b.Navigation("RecipeCategories");
+                });
+
             modelBuilder.Entity("bbc_scraper_api.MariaDBModels.IngredientGroup", b =>
                 {
                     b.Navigation("Ingredients");
+                });
+
+            modelBuilder.Entity("bbc_scraper_api.MariaDBModels.Keyword", b =>
+                {
+                    b.Navigation("RecipeKeywords");
                 });
 
             modelBuilder.Entity("bbc_scraper_api.MariaDBModels.Recipe", b =>

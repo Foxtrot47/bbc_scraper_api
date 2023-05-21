@@ -1,5 +1,19 @@
 ﻿namespace bbc_scraper_api.MariaDBModels;
 
+public class Category
+{
+    public int Id { get; set; }
+    public string? Name { get; set; }
+    public ICollection<RecipeCategory>? RecipeCategories { get; set; }
+}
+
+public class Keyword
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public ICollection<RecipeKeyword>? RecipeKeywords { get; set; }
+}
+
 public class Image
 {
     public int Id { get; set; }
@@ -51,6 +65,7 @@ public class Rating
     public bool IsHalfStar { get; set; }
     public int Total { get; set; }
 }
+
 public class Recipe
 {
     public int Id { get; set; }
@@ -75,8 +90,11 @@ public class Recipe
 
 public class RecipeCategory
 {
-    public int Id { get; set; }
-    public string? Name { get; set; }
+    public int RecipeId { get; set; }
+    public Recipe? Recipe { get; set; }
+
+    public int CategoryId { get; set; }
+    public Category? Category { get; set; }
 }
 
 public class RecipeCuisine
@@ -94,10 +112,12 @@ public class RecipeDiet
 
 public class RecipeKeyword
 {
-    public int Id { get; set; }
     public int RecipeId { get; set; }
-    public string? Name { get; set; }
+    public Recipe? Recipe { get; set; }
+    public int KeywordId { get; set; }
+    public Keyword? Keyword { get; set; }
 }
+
 public class SimilarRecipe
 {
     public int Id { get; set; }
