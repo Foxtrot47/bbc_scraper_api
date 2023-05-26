@@ -4,14 +4,28 @@ public class Category
 {
     public int Id { get; set; }
     public string? Name { get; set; }
-    public ICollection<RecipeCategory>? RecipeCategories { get; set; }
+    public List<Recipe>? Recipes { get; set; }
+}
+
+public class Cuisine
+{
+    public int Id { get; set; }
+    public string? Name { get; set; }
+    public List<Recipe>? Recipes { get; set; }
+}
+
+public class Diet
+{
+    public int Id { get; set; }
+    public string? Name { get; set; }
+    public List<Recipe>? Recipes { get; set; }
 }
 
 public class Keyword
 {
     public int Id { get; set; }
-    public string Name { get; set; }
-    public ICollection<RecipeKeyword>? RecipeKeywords { get; set; }
+    public string? Name { get; set; }
+    public List<Recipe>? Recipes { get; set; }
 }
 
 public class Image
@@ -33,6 +47,7 @@ public class Ingredient
     public string? Note { get; set; }
     public string? QuantityText { get; set; }
     public Term? Term { get; set; }
+    public List<Recipe>? Recipes { get; set; }
 }
 
 public class IngredientGroup
@@ -69,53 +84,23 @@ public class Rating
 public class Recipe
 {
     public int Id { get; set; }
-    public ICollection<RecipeCategory>? Categories { get; set; }
-    public ICollection<RecipeCuisine>? Cuisine { get; set; }
+    public ICollection<Category>? Categories { get; set; }
+    public ICollection<Cuisine>? Cuisines { get; set; }
     public DateTime Date { get; set; }
     public string? Description { get; set; }
-    public ICollection<RecipeDiet>? Diet { get; set; }
+    public ICollection<Diet>? Diets { get; set; }
     public Image? Image { get; set; }
     public ICollection<IngredientGroup>? Ingredients { get; set; }
     public ICollection<Instruction>? Instructions { get; set; }
-    public ICollection<RecipeKeyword>? Keywords { get; set; }
+    public ICollection<Keyword>? Keywords { get; set; }
     public string? Name { get; set; }
     public ICollection<NutritionalInfo>? NutritionalInfo { get; set; }
     public Rating? Rating { get; set; }
-    public string Slug { get; set; }
+    public string? Slug { get; set; }
     public ICollection<SimilarRecipe>? SimilarRecipes { get; set; }
     public string? SkillLevel { get; set; }
     public Time? Time { get; set; }
     public string? Yield { get; set; }
-}
-
-public class RecipeCategory
-{
-    public int RecipeId { get; set; }
-    public Recipe? Recipe { get; set; }
-
-    public int CategoryId { get; set; }
-    public Category? Category { get; set; }
-}
-
-public class RecipeCuisine
-{
-    public int Id { get; set; }
-    public string? Name { get; set; }
-}
-
-public class RecipeDiet
-{
-    public int Id { get; set; }
-    public int RecipeId { get; set; }
-    public string? Name { get; set; }
-}
-
-public class RecipeKeyword
-{
-    public int RecipeId { get; set; }
-    public Recipe? Recipe { get; set; }
-    public int KeywordId { get; set; }
-    public Keyword? Keyword { get; set; }
 }
 
 public class SimilarRecipe
@@ -124,22 +109,12 @@ public class SimilarRecipe
     public string? Title { get; set; }
     public string? Url { get; set; }
     public Image? Image { get; set; }
-    public SimilarRecipeRating? Rating { get; set; }
-}
-
-public class SimilarRecipeRating
-{
-    public int Id { get; set; }
-    public string? RatingValue { get; set; }
-    public string? RatingCount { get; set; }
-    public string? RatingTypeLabel { get; set; }
-    public bool HasRatingCount { get; set; }
-    public bool IsHalfStar { get; set; }
+    public Rating? Rating { get; set; }
 }
 
 public class Term
 {
-    public string? Id { get; set; }
+    public int Id { get; set; }
     public string? Type { get; set; }
     public string? Slug { get; set; }
     public string? Display { get; set; }

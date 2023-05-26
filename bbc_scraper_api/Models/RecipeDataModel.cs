@@ -40,7 +40,7 @@ namespace bbc_scraper_api.Models
 
         [BsonElement("name")]
         [JsonPropertyName("name")]
-        public string? Name { get; set; } = null!;
+        public string? Name { get; set; }
 
         [BsonElement("nutritionalInfo")]
         [JsonPropertyName("nutritionalInfo")]
@@ -52,7 +52,7 @@ namespace bbc_scraper_api.Models
 
         [BsonElement("slug")]
         [JsonPropertyName("slug")]
-        public string? Slug { get; set; } = null!;
+        public string? Slug { get; set; }
 
         [BsonElement("similiarRecipes")]
         [JsonPropertyName("similiarRecipes")]
@@ -69,7 +69,6 @@ namespace bbc_scraper_api.Models
         [BsonElement("yield")]
         [JsonPropertyName("yield")]
         public string? Yield { get; set; }
-
     }
     [BsonIgnoreExtraElements]
     public class RecipeDataIngredientsModel
@@ -82,7 +81,6 @@ namespace bbc_scraper_api.Models
 
         [BsonElement("ingredients")]
         public List<RecipeDataIngredientModel>? Ingredients { get; set; }
-
     }
 
     [BsonIgnoreExtraElements]
@@ -105,7 +103,6 @@ namespace bbc_scraper_api.Models
 
         [BsonElement("term")]
         public RecipeDataIngredientTerm? Term { get; set; }
-
     }
 
     [BsonIgnoreExtraElements]

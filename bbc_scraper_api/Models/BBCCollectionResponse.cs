@@ -14,14 +14,13 @@ public class BbcCollectionApiResponseItem
 {
     [JsonPropertyName("id")]
     public string? Id { get; set; }
-    
+
     [JsonPropertyName("url")]
     public string? Url { get; set; }
-    
-    [JsonPropertyName("title")] public string? Name { get; set; }
-    
-    [JsonPropertyName("Image")] public Image Image { get; set; }
-    
-    [JsonPropertyName("rating")] public ContentAPRating Rating { get; set; }
-}
 
+    [JsonPropertyName("title")] public string? Name { get; set; }
+
+    [JsonPropertyName("Image")] public Image? Image { get; set; }
+
+    [JsonPropertyName("rating")] public ContentAPRating? Rating { get; set; }
+}
