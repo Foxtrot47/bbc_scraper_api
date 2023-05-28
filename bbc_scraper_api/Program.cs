@@ -3,13 +3,11 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Web;
 using AngleSharp;
-using bbc_scraper_api.Contexts;
 using bbc_scraper_api.MariaDBModels;
 using bbc_scraper_api.Models;
 using bbc_scraper_api.Services;
 using bbc_scraper_api.Utils;
 using Microsoft.AspNetCore.Http.Json;
-using Microsoft.EntityFrameworkCore;
 using RestSharp;
 using Image = bbc_scraper_api.MariaDBModels.Image;
 using NutritionalInfo = bbc_scraper_api.MariaDBModels.NutritionalInfo;
@@ -21,21 +19,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.Configure<RecipeDatabaseSettings>(
-    builder.Configuration.GetSection("RecipeDatabase"));
-
-// builder.Services.AddDbContext<RecipeDbContext>(dbContextOptions => dbContextOptions
-//     .UseMySql(builder.Configuration.GetConnectionString("MariaDbConnectionString"),
-//         ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("MariaDbConnectionString")))
-// );
-
-// builder.Services.AddSingleton<RecipeDataService>(
-//     provider => new RecipeDataService(builder.Configuration.GetConnectionString("MariaDbConnectionString")));
-
-builder.Services.AddSingleton<RecipeDataService>(
-    provider => new RecipeDataService(builder.Configuration.GetConnectionString("PostgreSQLConnectionString")));
-
-builder.Services.AddSingleton<RecipeDataServiceOld>();
+builder.Services.AddSingleton<RecipeDataService>(provider => 
+    new RecipeDataService(builder.Configuration.GetConnectionString("PostgreSQLConnectionString")));
 
 builder.Services.Configure<JsonOptions>(o => o.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
@@ -85,7 +70,7 @@ app.MapGet("/search", async (string query, bool fetchSinglePage, RecipeDataServi
         existingItems = await service.GetExistingRecipeIds(itemIds);
         items = items.Where(item => !existingItems.Contains(int.Parse(item.Id))).ToList();
 
-        var maxDegreeOfParallelism = 4; // Set the maximum degree of parallelism
+        var maxDegreeOfParallelism = 32; // Set the maximum degree of parallelism
         using var semaphore = new SemaphoreSlim(maxDegreeOfParallelism);
 
         var tasks = items?.Select(async item =>
@@ -100,52 +85,51 @@ app.MapGet("/search", async (string query, bool fetchSinglePage, RecipeDataServi
                 semaphore.Release();
             }
         });
-        
-
         // var tasks = items?.Select(item => FetchAndAddRecipe(item, service));
         if (tasks != null) await Task.WhenAll(tasks);
     } while (responseResult?.SearchResults.NextUrl != null && fetchLimit > 1);
 });
-
-app.MapGet("/scrapecollection", async (string collectionSlug, RecipeDataServiceOld service) =>
-{
-    try
-    {
-        var pageNum = 1;
-        BbcCollectionApiResponseRoot response;
-        do
-        {
-            var query = bbcBaseAPI + "lists/posts/list/" + collectionSlug + "/items?page=" + pageNum;
-            response = await httpClient.GetJsonAsync<BbcCollectionApiResponseRoot>(query);
-            if (response?.Items == null)
-                break;
-            foreach (var item in response.Items)
-            {
-                var collectionItem = new CollectionModel();
-                var info = new CultureInfo("en-US", false).TextInfo;
-                collectionItem.CollectionName = info.ToTitleCase(collectionSlug.Replace("-", " "));
-                collectionItem.CollectionSlug = collectionSlug;
-                collectionItem.RecipeNameName = item.Name;
-                collectionItem.Image = item.Image;
-                collectionItem.Url = item.Url;
-                collectionItem.DateAdded = DateTime.Now;
-                collectionItem.Rating = new RecipeDataRating
-                {
-                    Total = item.Rating.RatingCount,
-                    IsHalfStar = item.Rating.IsHalfStar,
-                    Average = (float)item.Rating.RatingValue
-                };
-                await service.CreateCollectionItemAsync(collectionItem);
-            }
-
-            pageNum++;
-        } while (!string.IsNullOrEmpty(response.NextUrl));
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine(ex.ToString());
-    }
-});
+//
+// app.MapGet("/scrapecollection", async (string collectionSlug, RecipeDataServiceOld service) =>
+// {
+//     try
+//     {
+//         var pageNum = 1;
+//         BbcCollectionApiResponseRoot response;
+//         do
+//         {
+//             var query = bbcBaseAPI + "lists/posts/list/" + collectionSlug + "/items?page=" + pageNum;
+//             response = await httpClient.GetJsonAsync<BbcCollectionApiResponseRoot>(query);
+//             if (response?.Items == null)
+//                 break;
+//             foreach (var item in response.Items)
+//             {
+//                 var collectionItem = new CollectionModel();
+//                 var info = new CultureInfo("en-US", false).TextInfo;
+//                 collectionItem.CollectionName = info.ToTitleCase(collectionSlug.Replace("-", " "));
+//                 collectionItem.CollectionSlug = collectionSlug;
+//                 collectionItem.RecipeNameName = item.Name;
+//                 collectionItem.Image = item.Image;
+//                 collectionItem.Url = item.Url;
+//                 collectionItem.DateAdded = DateTime.Now;
+//                 collectionItem.Rating = new RecipeDataRating
+//                 {
+//                     Total = item.Rating.RatingCount,
+//                     IsHalfStar = item.Rating.IsHalfStar,
+//                     Average = (float)item.Rating.RatingValue
+//                 };
+//                 await service.CreateCollectionItemAsync(collectionItem);
+//             }
+//
+//             pageNum++;
+//         } while (!string.IsNullOrEmpty(response.NextUrl));
+//     }
+//     catch (Exception ex)
+//     {
+//         Console.WriteLine(ex.ToString());
+//     }
+// });
+//
 
 async Task FetchAndAddRecipe(Item item, RecipeDataService service)
 {

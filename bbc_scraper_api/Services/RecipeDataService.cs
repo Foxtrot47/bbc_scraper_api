@@ -1,13 +1,13 @@
-﻿using bbc_scraper_api.Contexts;
-using bbc_scraper_api.MariaDBModels;
+﻿using bbc_scraper_api.MariaDBModels;
 using bbc_scraper_api.Models;
-using Microsoft.EntityFrameworkCore;
 using Diet = bbc_scraper_api.MariaDBModels.Diet;
 using Image = bbc_scraper_api.MariaDBModels.Image;
 using Ingredient = bbc_scraper_api.MariaDBModels.Ingredient;
 using IngredientGroup = bbc_scraper_api.MariaDBModels.IngredientGroup;
 using NutritionalInfo = bbc_scraper_api.MariaDBModels.NutritionalInfo;
 using Term = bbc_scraper_api.MariaDBModels.Term;
+using Dapper;
+using Npgsql;
 
 namespace bbc_scraper_api.Services;
 
@@ -20,200 +20,230 @@ public class RecipeDataService
         _connectionString = connectionString;
     }
 
-    public async Task<Category> FetchOrAddCategory(string query)
+    public async Task<int> FetchOrAddCategory(string query)
     {
-        await using var dbContext = new RecipeDbContext(_connectionString);
-        var existingCategory = await dbContext.Categories.FirstOrDefaultAsync(c => c.Name == query);
-        if (existingCategory != null)
-            return existingCategory;
+        await using var connection = new NpgsqlConnection(_connectionString);
+        var sql = "SELECT * FROM Categories  WHERE name = @Name LIMIT 1";
+        var results = await connection.QueryAsync<Category>(sql, new { Name = query });
 
-        var newCategory = new Category
-        {
-            Name = query
-        };
-        dbContext.Categories.Add(newCategory);
-        await dbContext.SaveChangesAsync();
-        return newCategory;
+        if (results?.ToList().Count > 0)
+            return results.First().Id;
+
+        sql = "INSERT INTO Categories (name) VALUES (@Value) RETURNING id";
+        return await connection.ExecuteScalarAsync<int>(sql, new { Value = query });
     }
 
-    private async Task<Cuisine> FetchOrAddCuisine(string query)
+    private async Task<int> FetchOrAddCuisine(string query)
     {
-        using (var dbContext = new RecipeDbContext(_connectionString))
-        {
-            var existingCuisine = await dbContext.Cuisines.FirstOrDefaultAsync(c => c.Name == query);
-            if (existingCuisine != null)
-                return existingCuisine;
+        await using var connection = new NpgsqlConnection(_connectionString);
+        var sql = "SELECT * FROM Cuisines  WHERE name = @Name LIMIT 1";
+        var results = await connection.QueryAsync<Cuisine>(sql, new { Name = query });
 
-            var newCuisine = new Cuisine
-            {
-                Name = query
-            };
-            dbContext.Cuisines.Add(newCuisine);
-            await dbContext.SaveChangesAsync();
-            return newCuisine;
-        }
+        if (results?.ToList().Count > 0)
+            return results.First().Id;
+
+        sql = "INSERT INTO Cuisines (name) VALUES (@Value) RETURNING id";
+        return await connection.ExecuteScalarAsync<int>(sql, new { Value = query });
     }
 
-    private async Task<Keyword> FetchOrAddKeyword(string query)
+    private async Task<int> FetchOrAddDiet(string query)
     {
-        using (var dbContext = new RecipeDbContext(_connectionString))
-        {
-            var existingKeyword = await dbContext.Keywords.FirstOrDefaultAsync(c => c.Name == query);
-            if (existingKeyword != null)
-                return existingKeyword;
+        await using var connection = new NpgsqlConnection(_connectionString);
+        var sql = "SELECT * FROM Diets WHERE name = @Name LIMIT 1";
+        var results = await connection.QueryAsync<Diet>(sql, new { Name = query });
 
-            var newKeyword = new Keyword
-            {
-                Name = query
-            };
-            dbContext.Keywords.Add(newKeyword);
-            await dbContext.SaveChangesAsync();
-            return newKeyword;
-        }
+        if (results?.ToList().Count > 0)
+            return results.First().Id;
+
+        sql = "INSERT INTO Diets (name) VALUES (@Value) RETURNING id";
+        return await connection.ExecuteScalarAsync<int>(sql, new { Value = query });
+    }
+    private async Task<int> FetchOrAddKeyword(string query)
+    {
+        await using var connection = new NpgsqlConnection(_connectionString);
+        var sql = "SELECT * FROM Keywords WHERE name = @Name LIMIT 1";
+        var results = await connection.QueryAsync<Keyword>(sql, new { Name = query });
+
+        if (results?.ToList().Count > 0)
+            return results.First().Id;
+
+        sql = "INSERT INTO Keywords (name) VALUES (@Value) RETURNING id";
+        return await connection.ExecuteScalarAsync<int>(sql, new { Value = query });
     }
 
-    private async Task<Diet> FetchOrAddDiet(string query)
+    private async Task<int> FetchOrAddTerm(string display, string slug, string taxonomy, string type)
     {
-        using (var dbContext = new RecipeDbContext(_connectionString))
-        {
-            var existingDiet = await dbContext.Diets.FirstOrDefaultAsync(c => c.Name == query);
-            if (existingDiet != null)
-                return existingDiet;
+        await using var connection = new NpgsqlConnection(_connectionString);
+        var sql = "SELECT * FROM terms WHERE display = @Display LIMIT 1";
+        var results = await connection.QueryAsync<Term>(sql, new { Display = display });
 
-            var newDiet = new Diet
-            {
-                Name = query
-            };
-            dbContext.Diets.Add(newDiet);
-            await dbContext.SaveChangesAsync();
-            return newDiet;
-        }
+        if (results?.ToList().Count > 0)
+            return results.First().Id;
+
+        sql = "INSERT INTO terms (display, slug, taxonomy,type) VALUES (@Display, @Slug, @Taxonomy, @Type) RETURNING id";
+        return await connection.ExecuteScalarAsync<int>(sql, new
+        {
+            display,
+            slug,
+            taxonomy,
+            type
+        });
     }
 
     public async Task FetchOrAddRecipe(PageProps pageProps, List<ContentAPIResponse> contentApiResponses)
     {
         try
         {
-            using (var dbContext = new RecipeDbContext(_connectionString))
+            var date = DateTime.Now;
+            Console.WriteLine($"Fetch fn for ${pageProps.Schema.Name} starting at ${date}");
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+            using var transaction = connection.BeginTransaction();
+
+            var sql = "INSERT INTO images (url,title,alt,width,height,aspectratio) VALUES (@Url, @Title, @Alt, @Width, @Height, @AspectRatio) RETURNING id";
+            var ImageId = await connection.ExecuteScalarAsync<int>(sql, new
             {
-                var oldRecipe =
-                    await dbContext.Recipes.FirstOrDefaultAsync(r => r.Id == Convert.ToInt32(pageProps.PostId));
-                if (oldRecipe != null)
-                    return;
+                pageProps?.Image?.Alt,
+                pageProps?.Image?.Url,
+                pageProps?.Image?.Height,
+                pageProps?.Image?.Title,
+                pageProps?.Image?.Width,
+                pageProps?.Image?.AspectRatio
+            });
 
-                var categoryList = new List<Category>();
-                if (pageProps?.Schema.RecipeCategory != null)
-                    foreach (var category in pageProps?.Schema?.RecipeCategory?.Split(", "))
-                        categoryList.Add(await FetchOrAddCategory(category));
+            sql = "INSERT INTO ratings (avg,ishalfstar,total) VALUES (@Avg, @IsHalfStar, @Total) RETURNING id";
+            var RatingId = await connection.ExecuteScalarAsync<int>(sql, new
+            {
+                pageProps?.UserRatings?.Avg,
+                pageProps?.UserRatings?.IsHalfStar,
+                pageProps?.UserRatings?.Total
+            });
 
-                var cuisineList = new List<Cuisine>();
-                if (pageProps?.Schema?.RecipeCuisine != null)
-                    foreach (var cuisine in pageProps?.Schema?.RecipeCuisine?.Split(", "))
-                        cuisineList.Add(await FetchOrAddCuisine(cuisine));
+            sql = "INSERT INTO times (cooktime,preptime,totaltime) VALUES (@PrepTime, @CookTime, @TotalTime) RETURNING id";
+            var TimeId = await connection.ExecuteScalarAsync<int>(sql, new
+            {
+                PrepTime = pageProps.CookAndPrepTime.PreparationMax / 60,
+                CookTime = pageProps.CookAndPrepTime.CookingMax / 60,
+                TotalTime = pageProps.CookAndPrepTime.Total / 60
+            });
 
-                var dietList = new List<Diet>();
-                foreach (var cuisine in pageProps?.Diet?.Select(diet => diet.Display))
-                    dietList.Add(await FetchOrAddDiet(cuisine));
+            sql = "INSERT INTO recipes (id,date,description,imageid,name,ratingid,slug,skilllevel,timeid,yield) VALUES (@Id,@Date,@Description,@ImageId,@Name,@RatingId,@Slug,@SkillLevel,@TimeId,@Yield) RETURNING id";
+            var RecipeId = await connection.ExecuteScalarAsync<int>(sql, new
+            {
+                Id = Convert.ToInt32(pageProps.PostId),
+                Date = Convert.ToDateTime(pageProps?.Schema?.DatePublished),
+                pageProps?.Schema?.Description,
+                ImageId,
+                pageProps?.Schema?.Name,
+                RatingId,
+                pageProps?.Slug,
+                pageProps?.SkillLevel,
+                TimeId,
+                Yield = pageProps?.Schema?.RecipeYield
+            });
 
-                var ingredientGroupList = new List<IngredientGroup>();
-                foreach (var group in pageProps.IngredientGroups)
+            var categoryList = new List<RecipeCategory>();
+            if (pageProps?.Schema?.RecipeCategory != null)
+            {
+                foreach (var category in pageProps?.Schema?.RecipeCategory?.Split(", "))
                 {
-                    var ingredientList = new List<Ingredient>();
-                    foreach (var i in group.Ingredients)
+                    categoryList.Add(new RecipeCategory
                     {
-                        var ingredient = new Ingredient
-                        {
-                            Type = i.Type,
-                            IngredientText = i.IngredientText,
-                            Note = i.Note,
-                            QuantityText = i.QuantityText,
-                            Term = new Term
-                            {
-                                Display = i.Term?.Display,
-                                Slug = i.Term?.Slug,
-                                Taxonomy = i.Term?.Taxonomy,
-                                Type = i.Term?.Type
-                            }
-                        };
-                        ingredientList.Add(ingredient);
-                    }
-
-                    var ingredientGroup = new IngredientGroup
-                    {
-                        Heading = group.Heading,
-                        Ingredients = ingredientList
-                    };
-                    ingredientGroupList.Add(ingredientGroup);
+                        RecipeId = RecipeId,
+                        CategoryId = await FetchOrAddCategory(category)
+                    });
                 }
 
-                var keywordList = new List<Keyword>();
-                foreach (var word in pageProps?.Schema?.Keywords.Split(", "))
-                    keywordList.Add(await FetchOrAddKeyword(word));
-
-                var newRecipe = new Recipe();
-
-                newRecipe.Id = Convert.ToInt32(pageProps.PostId);
-                newRecipe.Categories = categoryList;
-                newRecipe.Cuisines = cuisineList;
-                newRecipe.Description = pageProps?.Schema?.Description;
-                newRecipe.Date = Convert.ToDateTime(pageProps?.Schema?.DatePublished);
-                newRecipe.Diets = dietList;
-                newRecipe.Image = new Image
-                {
-                    Alt = pageProps.Image.Alt,
-                    Url = pageProps.Image.Url,
-                    Height = pageProps.Image.Height,
-                    Title = pageProps.Image.Title,
-                    Width = pageProps.Image.Width,
-                    AspectRatio = pageProps.Image.AspectRatio
-                };
-                newRecipe.Ingredients = ingredientGroupList;
-                newRecipe.Instructions = pageProps?.Schema?.RecipeInstructions?.ConvertAll(i => new Instruction
-                {
-                    Type = i.Type,
-                    Text = i.Text
-                });
-                newRecipe.Keywords = keywordList;
-                newRecipe.Rating = new Rating
-                {
-                    Avg = pageProps.UserRatings.Avg,
-                    IsHalfStar = pageProps.UserRatings.IsHalfStar,
-                    Total = pageProps.UserRatings.Total
-                };
-                newRecipe.Name = pageProps?.Schema?.Name;
-                newRecipe.NutritionalInfo = pageProps?.NutritionalInfo?.ConvertAll(i => new NutritionalInfo
-                {
-                    Label = i.Label,
-                    Prefix = i.Prefix,
-                    Suffix = i.Suffix,
-                    Value = i.Value
-                });
-                newRecipe.SkillLevel = pageProps?.SkillLevel;
-                newRecipe.Slug = pageProps?.Slug;
-                newRecipe.Time = new Time
-                {
-                    PrepTime = pageProps.CookAndPrepTime.PreparationMax / 60,
-                    CookTime = pageProps.CookAndPrepTime.CookingMax / 60,
-                    TotalTime = pageProps.CookAndPrepTime.Total / 60
-                };
-                newRecipe.Yield = pageProps?.Schema?.RecipeYield;
-                newRecipe.SimilarRecipes = contentApiResponses?.ConvertAll(content =>
-                    new SimilarRecipe
-                    {
-                        Title = content.Title,
-                        Url = content.Url,
-                        Rating = new Rating
-                        {
-                            Avg = Convert.ToDouble(content.Rating.RatingValue),
-                            IsHalfStar = content.Rating.IsHalfStar,
-                            Total = content.Rating.RatingCount
-                        }
-                    }) ?? new List<SimilarRecipe>();
-
-                dbContext.Recipes.Add(newRecipe);
-                Console.WriteLine("Adding " + pageProps?.Schema?.Name);
-                await dbContext.SaveChangesAsync();
+                sql = "INSERT INTO recipecategories (recipeid,categoryid) VALUES (@RecipeId, @CategoryId)";
+                await connection.ExecuteAsync(sql, categoryList);
             }
+
+            var cuisineList = new List<RecipeCuisine>();
+            if (pageProps?.Schema?.RecipeCuisine != null)
+            {
+                foreach (var cuisine in pageProps?.Schema?.RecipeCuisine?.Split(", "))
+                {
+                    cuisineList.Add(new RecipeCuisine
+                    {
+                        RecipeId = RecipeId,
+                        CuisineId = await FetchOrAddCuisine(cuisine)
+                    });
+                }
+                sql = "INSERT INTO recipecuisines (recipeid,cuisineid) VALUES (@RecipeId, @CuisineId)";
+                await connection.ExecuteAsync(sql, cuisineList);
+            }
+
+            var dietList = new List<RecipeDiet>();
+            if (pageProps?.Diet != null)
+            {
+                foreach (var diet in pageProps?.Diet?.Select(diet => diet.Display))
+                {
+                    dietList.Add(new RecipeDiet
+                    {
+                        RecipeId = RecipeId,
+                        DietId = await FetchOrAddDiet(diet)
+                    });
+                }
+                sql = "INSERT INTO recipediets (recipeid,dietid) VALUES (@RecipeId, @DietId)";
+                await connection.ExecuteAsync(sql, dietList);
+            }
+
+            var keywordList = new List<RecipeKeyword>();
+            if (pageProps?.Schema?.Keywords != null)
+            {
+                foreach (var keyword in pageProps?.Schema?.Keywords?.Split(", "))
+                {
+                    keywordList.Add(new RecipeKeyword
+                    {
+                        RecipeId = RecipeId,
+                        KeywordId = await FetchOrAddKeyword(keyword)
+                    });
+                }
+                sql = "INSERT INTO recipekeywords (recipeid,keywordid) VALUES (@RecipeId, @KeywordId)";
+                await connection.ExecuteAsync(sql, keywordList);
+            }
+
+
+            foreach (var group in pageProps.IngredientGroups)
+            {
+                sql = "INSERT INTO ingredientgroups (heading,recipeid) VALUES (@Heading,@RecipeId) RETURNING id";
+                var GroupId = await connection.ExecuteScalarAsync<int>(sql, new { group.Heading, RecipeId = Convert.ToInt32(pageProps.PostId) });
+
+                var ingredientList = new List<Ingredient>();
+                foreach (var i in group.Ingredients)
+                {
+                    var TermId = await FetchOrAddTerm(i.Term?.Display, i.Term?.Slug, i.Term?.Taxonomy, i.Term?.Type);
+
+                    sql = "INSERT INTO ingredients (type,ingredienttext,note,quantitytext,termid,ingredientgroupid) VALUES (@Type, @IngredientText, @Note, @QuantityText, @TermId, @GroupId) RETURNING id";
+                    var ingredientId = await connection.QueryAsync<int>(sql, new
+                    {
+                        type = i.Type,
+                        i.IngredientText,
+                        i.Note,
+                        i.QuantityText,
+                        TermId,
+                        GroupId
+                    });
+                }
+            }
+
+            var instructionList = pageProps?.Schema?.RecipeInstructions?.ConvertAll(i => new Instruction
+            {
+                RecipeId = RecipeId,
+                Type = i.Type,
+                Text = i.Text
+            });
+
+            sql = "INSERT INTO instructions (type,text,recipeid) VALUES (@Type,@Text,@RecipeId)";
+            await connection.ExecuteAsync(sql, instructionList);
+
+            // Insert similar recipes
+            await InsertSimilarRecipesAsync(connection, RecipeId, contentApiResponses);
+
+            transaction.Commit();
+            var nextDate = DateTime.Now;
+            var diff = (date - nextDate).TotalSeconds;
+            Console.WriteLine($"Fetch fn for {pageProps.Schema.Name} ended at {nextDate} total seconds taken {diff}");
         }
         catch (Exception ex)
         {
@@ -223,7 +253,25 @@ public class RecipeDataService
 
     public async Task<List<int>> GetExistingRecipeIds(List<int> recipeIds)
     {
-        await using var dbContext = new RecipeDbContext(_connectionString);
-        return await dbContext.Recipes.Where(record => recipeIds.Contains(record.Id)).Select(r => r.Id).ToListAsync();
+        await using var connection = new NpgsqlConnection(_connectionString);
+        var sql = "SELECT * FROM recipes  WHERE id = ANY(@Ids)";
+        var results = await connection.QueryAsync<Recipe>(sql, new { Ids = recipeIds });
+        return results.Select(r => r.Id).ToList();
+    }
+    private static async Task InsertSimilarRecipesAsync(NpgsqlConnection connection, int recipeId, List<ContentAPIResponse> contentApiResponses)
+    {
+        var similarRecipes = contentApiResponses
+            .ConvertAll(c => new SimilarRecipe
+            {
+                RecipeId = recipeId,
+                SimiliarRecipeId = Convert.ToInt32(c.Id)
+            });
+
+        if (similarRecipes.Any())
+        {
+            const string sql = "INSERT INTO similarrecipes (recipeid, similiarrecipeid) " +
+                      "VALUES (@RecipeId, @SimiliarRecipeId)";
+            await connection.ExecuteAsync(sql, similarRecipes);
+        }
     }
 }
