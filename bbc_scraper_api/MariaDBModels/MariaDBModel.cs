@@ -72,6 +72,7 @@ public class NutritionalInfo
     public string? Prefix { get; set; }
     public string? Suffix { get; set; }
     public double? Value { get; set; }
+    public int RecipeId { get; set; }
 }
 
 public class Rating

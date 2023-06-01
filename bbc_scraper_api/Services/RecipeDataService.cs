@@ -237,6 +237,18 @@ public class RecipeDataService
             sql = "INSERT INTO instructions (type,text,recipeid) VALUES (@Type,@Text,@RecipeId)";
             await connection.ExecuteAsync(sql, instructionList);
 
+            var nutritionalInfoList = pageProps?.NutritionalInfo?.ConvertAll(i => new NutritionalInfo
+            {
+                Label = i.Label,
+                Prefix = i.Prefix,
+                Suffix = i.Suffix,
+                Value = i.Value,
+                RecipeId = RecipeId
+            });
+
+            sql = "INSERT INTO nutritionalinfos (label,prefix,suffix,value,recipeid) VALUES (@Label,@Prefix,@Suffix,@Value,@RecipeId)";
+            await connection.ExecuteAsync(sql, nutritionalInfoList);
+
             // Insert similar recipes
             await InsertSimilarRecipesAsync(connection, RecipeId, contentApiResponses);
 
