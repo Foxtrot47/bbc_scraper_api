@@ -70,7 +70,7 @@ app.MapGet("/search", async (string query, bool fetchSinglePage, RecipeDataServi
         existingItems = await service.GetExistingRecipeIds(itemIds);
         items = items.Where(item => !existingItems.Contains(int.Parse(item.Id))).ToList();
 
-        var maxDegreeOfParallelism = 32; // Set the maximum degree of parallelism
+        var maxDegreeOfParallelism = 24; // Set the maximum degree of parallelism
         using var semaphore = new SemaphoreSlim(maxDegreeOfParallelism);
 
         var tasks = items?.Select(async item =>
