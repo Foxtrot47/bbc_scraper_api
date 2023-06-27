@@ -366,4 +366,4 @@ FodyWeavers.xsd
 .idea
 
 # Visual Studio COde
-.vs
+.vscode
