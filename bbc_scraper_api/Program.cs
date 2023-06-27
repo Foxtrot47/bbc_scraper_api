@@ -89,47 +89,82 @@ app.MapGet("/search", async (string query, bool fetchSinglePage, RecipeDataServi
         if (tasks != null) await Task.WhenAll(tasks);
     } while (responseResult?.SearchResults.NextUrl != null && fetchLimit > 1);
 });
-//
-// app.MapGet("/scrapecollection", async (string collectionSlug, RecipeDataServiceOld service) =>
-// {
-//     try
-//     {
-//         var pageNum = 1;
-//         BbcCollectionApiResponseRoot response;
-//         do
-//         {
-//             var query = bbcBaseAPI + "lists/posts/list/" + collectionSlug + "/items?page=" + pageNum;
-//             response = await httpClient.GetJsonAsync<BbcCollectionApiResponseRoot>(query);
-//             if (response?.Items == null)
-//                 break;
-//             foreach (var item in response.Items)
-//             {
-//                 var collectionItem = new CollectionModel();
-//                 var info = new CultureInfo("en-US", false).TextInfo;
-//                 collectionItem.CollectionName = info.ToTitleCase(collectionSlug.Replace("-", " "));
-//                 collectionItem.CollectionSlug = collectionSlug;
-//                 collectionItem.RecipeNameName = item.Name;
-//                 collectionItem.Image = item.Image;
-//                 collectionItem.Url = item.Url;
-//                 collectionItem.DateAdded = DateTime.Now;
-//                 collectionItem.Rating = new RecipeDataRating
-//                 {
-//                     Total = item.Rating.RatingCount,
-//                     IsHalfStar = item.Rating.IsHalfStar,
-//                     Average = (float)item.Rating.RatingValue
-//                 };
-//                 await service.CreateCollectionItemAsync(collectionItem);
-//             }
-//
-//             pageNum++;
-//         } while (!string.IsNullOrEmpty(response.NextUrl));
-//     }
-//     catch (Exception ex)
-//     {
-//         Console.WriteLine(ex.ToString());
-//     }
-// });
-//
+
+app.MapGet("/scrapecollection", async (string collectionSlug, bool fetchSinglePage, RecipeDataService service) =>
+{
+    try
+    {
+        string collectionName;
+        string collectionDesc;
+        
+        var config = Configuration.Default.WithDefaultLoader();
+        var address = "https://www.bbcgoodfood.com/recipes/collection/" + collectionSlug;
+        var context = BrowsingContext.New(config);
+        var document = await context.OpenAsync(address);
+        collectionName = document.QuerySelector("h1.heading-1")?.TextContent;
+        collectionDesc = document.QuerySelector("div.editor-content.mt-sm.pr-xxs.hidden-print p")?.TextContent;
+
+        var collectionId = await service.InsertCollection(collectionName, collectionDesc, collectionSlug);
+        
+        var fetchLimit = fetchSinglePage ? 1 : 100;
+        List<Item> items;
+        List<int> itemIds;
+        List<int> existingItems;
+        CollectionResponse? responseResult = null;
+        var firstFetch = true;
+        do
+        {
+            if (firstFetch)
+            {
+                responseResult =
+                    await httpClient.GetJsonAsync<CollectionResponse>(
+                        bbcBaseAPI + "lists/posts/list/" + collectionSlug + "/items");
+                firstFetch = false;
+            }
+            else
+            {
+                responseResult = await httpClient.GetJsonAsync<CollectionResponse>(responseResult?.NextUrl);
+            }
+
+            if (responseResult == null || responseResult?.Items.Count < 1)
+                break;
+
+            items = responseResult?.Items?.Select(item => new Item()
+            {
+                Id = item.Id,
+                Url = item.Url,
+                IsPremium = item.IsPremium,
+            }).ToList();
+            itemIds = items.ConvertAll(item => int.Parse(item.Id));
+            existingItems = await service.GetExistingRecipeIds(itemIds);
+            items = items.Where(item => !existingItems.Contains(int.Parse(item.Id))).ToList();
+
+            var maxDegreeOfParallelism = 24; // Set the maximum degree of parallelism
+            using var semaphore = new SemaphoreSlim(maxDegreeOfParallelism);
+
+            var tasks = items?.Select(async item =>
+            {
+                await semaphore.WaitAsync();
+                try
+                {
+                    await FetchAndAddRecipe(item, service);
+                    await service.AddToCollectionRecipes(collectionId, Convert.ToInt32(item.Id));
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
+            });
+
+            if (tasks != null) await Task.WhenAll(tasks);
+        } while (responseResult?.NextUrl != null && fetchLimit > 1);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine(ex.ToString());
+    }
+});
+
 
 async Task FetchAndAddRecipe(Item item, RecipeDataService service)
 {

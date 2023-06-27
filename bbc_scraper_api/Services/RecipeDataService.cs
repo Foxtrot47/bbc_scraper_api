@@ -270,6 +270,29 @@ public class RecipeDataService
         var results = await connection.QueryAsync<Recipe>(sql, new { Ids = recipeIds });
         return results.Select(r => r.Id).ToList();
     }
+
+    public async Task<bool> IsExistingCollection(int collectionId) 
+    {
+        await using var connection = new NpgsqlConnection(_connectionString);
+        const string sql = "SELECT CAST(CASE WHEN EXISTS (SELECT 1 FROM collections WHERE id = @Id) THEN 1 ELSE 0 END as BIT)";
+        return await connection.ExecuteScalarAsync<bool>(sql, new { Id = collectionId });
+    }
+    
+    public async Task<int> InsertCollection(string name, string desc, string slug)
+    {
+        await using var connection = new NpgsqlConnection(_connectionString);
+        const string sql = "INSERT INTO collections (name, description, slug) VALUES (@Name, @Description, @Slug) RETURNING id";
+        return await connection.ExecuteScalarAsync<int>(sql, new { Name = name, Description = desc, Slug = slug});
+    }
+
+    public async Task AddToCollectionRecipes(int collectionId, int recipeId)
+    {
+
+        await using var connection = new NpgsqlConnection(_connectionString);
+        const string sql = "INSERT INTO collectionrecipes (collectionid, recipeid) VALUES (@CollectionId, @RecipeID)";
+        await connection.ExecuteAsync(sql, new { CollectionId = collectionId, @RecipeID = recipeId });
+    }
+
     private static async Task InsertSimilarRecipesAsync(NpgsqlConnection connection, int recipeId, List<ContentAPIResponse> contentApiResponses)
     {
         var similarRecipes = contentApiResponses
